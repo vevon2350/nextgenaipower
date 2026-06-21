@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global Safety Net - Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Core Identity Primitive Helper
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Validation Blueprint for credentials format (Anti-Resource Poisoning)
+    function isValidCredentials(data) {
+      return data.userId is string 
+        && data.userId.size() <= 128
+        && data.updatedAt is string
+        && (data.get('nextgen', null) == null || (data.get('nextgen', null) is string && data.get('nextgen', null).size() <= 256))
+        && (data.get('openai', null) == null || (data.get('openai', null) is string && data.get('openai', null).size() <= 256))
+        && (data.get('hpcai', null) == null || (data.get('hpcai', null) is string && data.get('hpcai', null).size() <= 256))
+        && (data.get('nvidia', null) == null || (data.get('nvidia', null) is string && data.get('nvidia', null).size() <= 256))
+        && (data.get('stability', null) == null || (data.get('stability', null) is string && data.get('stability', null).size() <= 256))
+        && (data.get('huggingface', null) == null || (data.get('huggingface', null) is string && data.get('huggingface', null).size() <= 256))
+        && (data.get('news', null) == null || (data.get('news', null) is string && data.get('news', null).size() <= 256))
+        && (data.get('search', null) == null || (data.get('search', null) is string && data.get('search', null).size() <= 256));
+    }
+
+    // Secure Isolated sub-resource path
+    match /users/{userId}/private/credentials {
+      allow get, read, delete: if isOwner(userId);
+      
+      allow create: if isOwner(userId)
+        && isValidCredentials(request.resource.data)
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isOwner(userId)
+        && isValidCredentials(request.resource.data)
+        && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Remix NextGenAi Hybrid",
+  "description": "Multi-engine AI playground combining live web search grounding, image generation, real-time world news routing, and voice controls.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "credentials": {
+      "title": "User Credentials Override",
+      "description": "Secure private credentials override for third-party endpoints, belonging to a specific Firebase User.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the owning Firebase user."
+        },
+        "nextgen": {
+          "type": "string",
+          "description": "NextGen / Gemini core override token if set."
+        },
+        "openai": {
+          "type": "string",
+          "description": "OpenAI API override token if set."
+        },
+        "hpcai": {
+          "type": "string",
+          "description": "HPC AI API override token if set."
+        },
+        "nvidia": {
+          "type": "string",
+          "description": "Nvidia API override token if set."
+        },
+        "stability": {
+          "type": "string",
+          "description": "Stability AI override token if set."
+        },
+        "huggingface": {
+          "type": "string",
+          "description": "Hugging Face override token if set."
+        },
+        "news": {
+          "type": "string",
+          "description": "GNews API override token if set."
+        },
+        "search": {
+          "type": "string",
+          "description": "Serper search API override token if set."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp indicating when the credentials package was last synchronized."
+        }
+      },
+      "required": ["userId", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/private/credentials": {
+      "schema": "credentials",
+      "description": "Private sensitive third-party override keys belonging strictly to the specified userId."
+    }
+  }
+}
