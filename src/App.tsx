@@ -2591,10 +2591,10 @@ export default function App() {
                             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#paint0_linear_spark)"/>
                             <defs>
                               <linearGradient id="paint0_linear_spark" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#FC4147"/>
-                                <stop offset="0.25" stop-color="#FFD600"/>
-                                <stop offset="0.5" stop-color="#34A853"/>
-                                <stop offset="1" stop-color="#4285F4"/>
+                                <stop stopColor="#FC4147"/>
+                                <stop offset="0.25" stopColor="#FFD600"/>
+                                <stop offset="0.5" stopColor="#34A853"/>
+                                <stop offset="1" stopColor="#4285F4"/>
                               </linearGradient>
                             </defs>
                           </svg>
