@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Welcome from "./components/Welcome";
 import {
   Settings as SettingsIcon,
   RotateCcw,
@@ -28,7 +29,8 @@ import {
   Mail,
   Lock,
   Shield,
-  AlertCircle
+  AlertCircle,
+  Menu
 } from "lucide-react";
 import { 
   onAuthStateChanged, 
@@ -475,6 +477,7 @@ export default function App() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [isGenerating, setIsGenerating] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   // --- PRIVACY LOCK SCREEN STATES ---
   const [securedPin, setSecuredPin] = useState<string>(() => {
@@ -627,6 +630,18 @@ export default function App() {
   const [mergeLoading, setMergeLoading] = useState<boolean>(false);
   const [modalTab, setModalTab] = useState<"text" | "image">("text");
   const [isHeaderToolsOpen, setIsHeaderToolsOpen] = useState(false);
+
+  // Gemini-style Sidebar states
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("nextgen_sidebar_collapsed") === "true";
+    } catch (_) {
+      return false;
+    }
+  });
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isReasoningSectionExpanded, setIsReasoningSectionExpanded] = useState(true);
+  const [isCoreSectionExpanded, setIsCoreSectionExpanded] = useState(true);
 
   const [activeTextModel, setActiveTextModel] = useState<string>(() => {
     try {
@@ -2052,19 +2067,15 @@ export default function App() {
                 theme === "dark"
                   ? "bg-[#2d2f31] hover:bg-[#3d3f43]"
                   : "bg-[#f0f4f9] hover:bg-[#e3e8f0]"
-              } ${isPlusMenuOpen ? "rotate-45" : ""}`}
+              }`}
               title="Tools and Models Menu"
             >
-              <div className="relative w-4 h-4 flex items-center justify-center">
-                {/* Horizontal line */}
-                <div className={`absolute w-3.5 h-[2px] rounded-full transition-colors ${
-                  theme === "dark" ? "bg-[#e3e3e3]" : "bg-[#444746]"
-                }`} />
-                {/* Vertical line */}
-                <div className={`absolute w-[2px] h-3.5 rounded-full transition-colors ${
-                  theme === "dark" ? "bg-[#e3e3e3]" : "bg-[#444746]"
-                }`} />
-              </div>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.08H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.92l3.66-2.83z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.08l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38z"/>
+                </svg>
             </button>
 
             {/* Gemini style Dropdown Popup Overlay with direct AI model brain selection */}
@@ -2355,408 +2366,605 @@ export default function App() {
     };
   }, [isUnlocked, pinInput, securedPin, showRecovery]);
 
+  if (showWelcome) {
+    return <Welcome onEnter={() => setShowWelcome(false)} />;
+  }
+
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
-      theme === "dark" ? "bg-[#131314] text-zinc-100" : "bg-[#f4f7f6] text-zinc-800"
+    <div className={`min-h-screen w-screen flex overflow-hidden font-sans transition-colors duration-200 ${
+      theme === "dark" ? "bg-[#131415] text-zinc-100" : "bg-white text-zinc-800"
     }`}>
-      
-      {/* Subtle Toast Notifications */}
-      {apiError && (
-        <div className={`fixed bottom-5 right-5 z-50 max-w-sm p-3.5 rounded-xl shadow-xl flex items-center gap-3 animate-fade-in border ${
-          theme === "dark" 
-            ? "bg-[#1e1e20] border-zinc-800 text-zinc-200" 
-            : "bg-white border-zinc-200 text-zinc-800 border-zinc-300"
-        }`} id="sleek-toast-alert">
-          <span className="text-base shrink-0">✨</span>
-          <p className="text-[11px] font-semibold leading-normal flex-1">{apiError}</p>
-          <button onClick={() => setApiError(null)} className="opacity-50 hover:opacity-100 transition-opacity shrink-0 cursor-pointer">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
+      {/* Vibe Background */}
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
+        <div className="absolute -top-[10%] -left-[10%] w-[120%] h-[120%] bg-indigo-950/40 rounded-full blur-[80px] animate-vibe-slow"></div>
+        <div className="absolute -bottom-[10%] -right-[10%] w-[120%] h-[120%] bg-blue-950/30 rounded-full blur-[60px] animate-vibe-slow" style={{ animationDelay: '-6s' }}></div>
+      </div>
+
+      {/* MOBILE BACKDROP OVERLAY OVER SIDEDRAWER */}
+      {isMobileSidebarOpen && (
+        <div 
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs md:hidden"
+        />
       )}
 
-      {/* --- INTEGRATED NAV HEADER --- */}
+      {/* GEMINI SIDEBAR */}
+      <aside 
+        className={`fixed inset-y-0 left-0 z-50 md:relative md:flex flex-col shrink-0 overflow-hidden select-none transition-all duration-300 border-r ${
+          isMobileSidebarOpen 
+            ? "translate-x-0 w-[260px] flex" 
+            : "-translate-x-full md:translate-x-0"
+        } ${
+          isSidebarCollapsed ? "md:w-[68px]" : "md:w-[260px]"
+        } ${
+          theme === "dark" 
+            ? "bg-[#1e1e20] border-zinc-800/80 text-[#e3e3e3]" 
+            : "bg-[#f0f4f9] border-zinc-200 text-[#1f1f1f]"
+        }`}
+      >
+        {/* UPPER BRANDING & COLLAPSE TRIGGER */}
+        <div className={`flex items-center p-3.5 ${isSidebarCollapsed ? "flex-col gap-4 justify-center" : "justify-between"}`}>
+          {isSidebarCollapsed ? (
+            <div className="flex flex-col items-center gap-4">
+              <button
+                onClick={() => {
+                  setIsSidebarCollapsed(false);
+                  localStorage.setItem("nextgen_sidebar_collapsed", "false");
+                }}
+                className={`p-2 rounded-full cursor-pointer transition-colors ${
+                  theme === "dark" ? "hover:bg-zinc-800 text-zinc-400 hover:text-white" : "hover:bg-zinc-200/60 text-zinc-650 hover:text-zinc-900"
+                }`}
+                title="Expand sidebar"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="w-6 h-6 text-[#131415] dark:text-white flex items-center justify-center animate-pulse">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2Q12 12 22 12Q12 12 12 22Q12 12 2 12Q12 12 12 2Z" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 pl-1 animate-fade-in select-none">
+              <div className="w-6 h-6 text-[#131415] dark:text-white flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2Q12 12 22 12Q12 12 12 22Q12 12 2 12Q12 12 12 2Z" fill="currentColor" />
+                </svg>
+              </div>
+              <span className="font-sans font-semibold text-lg tracking-tight leading-none text-[#131415] dark:text-white">
+                NextGenAi
+              </span>
+            </div>
+          )}
+
+          {!isSidebarCollapsed && (
+            <button
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setIsMobileSidebarOpen(false);
+                } else {
+                  setIsSidebarCollapsed(true);
+                  localStorage.setItem("nextgen_sidebar_collapsed", "true");
+                }
+              }}
+              className={`p-2 rounded-full cursor-pointer transition-colors ${
+                theme === "dark" ? "hover:bg-zinc-800 text-zinc-400 hover:text-white" : "hover:bg-zinc-200/60 text-zinc-600 hover:text-zinc-900"
+              }`}
+              title="Collapse sidebar"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        {/* NEW CHAT BUTTON */}
+        <div className="px-3.5 py-2.5">
+          <button
+            onClick={() => {
+              handleClearChatstream();
+              if (window.innerWidth < 768) {
+                setIsMobileSidebarOpen(false);
+              }
+            }}
+            className={`w-full flex items-center transition-all cursor-pointer ${
+              isSidebarCollapsed 
+                ? "justify-center p-3 rounded-full" 
+                : "gap-3 px-4 py-3 rounded-full text-xs font-semibold"
+            } ${
+              theme === "dark"
+                ? "bg-zinc-850 hover:bg-zinc-800/90 text-zinc-200 border border-zinc-700/40"
+                : "bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-250/80 shadow-xs"
+            }`}
+            title="Start clear fresh canvas chat"
+          >
+            {!isSidebarCollapsed && <span className="animate-fade-in text-black dark:text-zinc-250">New chat</span>}
+          </button>
+        </div>
+
+        {/* MID PORTAL SECTION - TOOLS LIST (SCROLLABLE) */}
+        <div className="flex-grow overflow-y-auto px-2 py-3 space-y-4 font-sans text-xs">
+          
+          {/* REASONING LLMS SECTION */}
+          <div>
+            <div 
+              onClick={() => {
+                if (isSidebarCollapsed) {
+                  setIsSidebarCollapsed(false);
+                  localStorage.setItem("nextgen_sidebar_collapsed", "false");
+                  setIsReasoningSectionExpanded(true);
+                } else {
+                  setIsReasoningSectionExpanded(!isReasoningSectionExpanded);
+                }
+              }}
+              className={`flex items-center justify-between px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 hover:opacity-100 transition-opacity text-amber-500 cursor-pointer select-none`}
+            >
+              {isSidebarCollapsed ? (
+                <span className="text-sm font-semibold text-center w-full" title="Reasoning LLMs">🧠</span>
+              ) : (
+                <>
+                  <span className="animate-fade-in font-display">🧠 Reasoning LLMs</span>
+                  <span className="text-[9px] text-zinc-400">{isReasoningSectionExpanded ? "▼" : "▲"}</span>
+                </>
+              )}
+            </div>
+            {!isSidebarCollapsed && isReasoningSectionExpanded && (
+              <div className="space-y-0.5 max-h-[220px] overflow-y-auto pr-1">
+                {TEXT_MODELS.filter(m => m.id.includes("/")).map((m) => {
+                  const isSelected = !imageMode && activeTextModel === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        changeTextModel(m.id);
+                        setImageMode(false);
+                        const toastMsg = `Selected Reasoning LLM: ${m.name}`;
+                        showToastAlert(toastMsg);
+                        if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer gap-2.5 px-3 py-1.5 ${
+                        isSelected 
+                          ? theme === "dark" ? "bg-amber-500/10 text-amber-400 font-bold border-l-2 border-amber-500 animate-fade-in" : "bg-amber-100/40 text-amber-700 font-bold border-l-2 border-amber-500 animate-fade-in"
+                          : theme === "dark" ? "hover:bg-zinc-800/60 text-zinc-350" : "hover:bg-zinc-200/50 text-zinc-750"
+                      }`}
+                      title={`${m.name}: ${m.desc}`}
+                    >
+                      <span className="text-sm shrink-0">{m.avatar}</span>
+                      <div className="min-w-0 flex-1 flex flex-col">
+                        <span className="truncate text-[11px] leading-tight flex-1">{m.name}</span>
+                        {m.badge && <span className="text-[8px] opacity-60 text-amber-500 dark:text-amber-400">{m.badge}</span>}
+                      </div>
+                      {isSelected && <span className="text-amber-500 text-[10px]">✨</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* CORE INFERENCE SECTION */}
+          <div>
+            <div 
+              onClick={() => {
+                if (isSidebarCollapsed) {
+                  setIsSidebarCollapsed(false);
+                  localStorage.setItem("nextgen_sidebar_collapsed", "false");
+                  setIsCoreSectionExpanded(true);
+                } else {
+                  setIsCoreSectionExpanded(!isCoreSectionExpanded);
+                }
+              }}
+              className={`flex items-center justify-between px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 hover:opacity-100 transition-opacity text-sky-500 cursor-pointer select-none`}
+            >
+              {isSidebarCollapsed ? (
+                <span className="text-sm font-semibold text-center w-full" title="Core Inference">⚡</span>
+              ) : (
+                <>
+                  <span className="animate-fade-in font-display">⚡ Core Inference</span>
+                  <span className="text-[9px] text-zinc-400">{isCoreSectionExpanded ? "▼" : "▲"}</span>
+                </>
+              )}
+            </div>
+            {!isSidebarCollapsed && isCoreSectionExpanded && (
+              <div className="space-y-0.5 pr-1">
+                {TEXT_MODELS.filter(m => !m.id.includes("/")).map((m) => {
+                  const isSelected = !imageMode && activeTextModel === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        changeTextModel(m.id);
+                        setImageMode(false);
+                        const toastMsg = `Selected Core model: ${m.name}`;
+                        showToastAlert(toastMsg);
+                        if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer gap-2.5 px-3 py-1.5 ${
+                        isSelected 
+                          ? theme === "dark" ? "bg-sky-500/10 text-sky-400 font-bold border-l-2 border-sky-500 animate-fade-in" : "bg-sky-100/40 text-sky-700 font-bold border-l-2 border-sky-500 animate-fade-in"
+                          : theme === "dark" ? "hover:bg-zinc-800/60 text-zinc-350" : "hover:bg-zinc-200/50 text-zinc-750"
+                      }`}
+                      title={`${m.name}: ${m.desc}`}
+                    >
+                      <span className="text-sm shrink-0">
+                        {m.id === "gemini-3.5-flash" ? (
+                          <svg className="w-5 h-5 animate-fade-in" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#paint0_linear_spark)"/>
+                            <defs>
+                              <linearGradient id="paint0_linear_spark" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#FC4147"/>
+                                <stop offset="0.25" stop-color="#FFD600"/>
+                                <stop offset="0.5" stop-color="#34A853"/>
+                                <stop offset="1" stop-color="#4285F4"/>
+                              </linearGradient>
+                            </defs>
+                          </svg>
+                        ) : m.avatar}
+                      </span>
+                      <div className="min-w-0 flex-1 flex flex-col">
+                        <span className="truncate text-[11px] leading-tight flex-1">{m.name}</span>
+                        {m.badge && <span className="text-[8px] opacity-60 text-sky-500 dark:text-sky-400">{m.badge}</span>}
+                      </div>
+                      {isSelected && <span className="text-sky-500 text-[10px]">✨</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* SEARCH & SHOPPING SERVICES */}
+          <div>
+            {!isSidebarCollapsed && (
+              <p className="px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 text-sky-500 animate-fade-in">
+                Search Intelligence
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {[
+                { label: "Google Flights", icon: "✈️", color: "text-blue-500", action: () => setShowFlightsModal(true) },
+                { label: "Google Shopping", icon: "🛒", color: "text-amber-500", action: () => setShowShoppingModal(true) },
+                { label: "Google Images", icon: "🖼️", color: "text-purple-500", action: () => setShowImagesModal(true) },
+                { label: "Walmart Product Search", icon: "🏬", color: "text-sky-500", action: () => setShowWalmartModal(true) },
+              ].map((item, id) => (
+                <button
+                  key={id}
+                  onClick={() => {
+                    item.action();
+                    if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
+                    isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
+                  } ${
+                    theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
+                  }`}
+                  title={item.label}
+                >
+                  <span className="text-base">{item.icon}</span>
+                  {!isSidebarCollapsed && (
+                    <span className="truncate flex-grow animate-fade-in">{item.label}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* DOCUMENTATION SERVICES */}
+          <div>
+            {!isSidebarCollapsed && (
+              <p className="px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 text-emerald-500 animate-fade-in">
+                Documents & Files
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {[
+                { label: "Google Drive Docs", icon: "📂", color: "text-blue-500", action: () => setShowDriveModal(true) },
+                { label: "PDF.co Doc Suite", icon: "📄", color: "text-emerald-500", action: () => setShowPdfcoModal(true) },
+              ].map((item, id) => (
+                <button
+                  key={id}
+                  onClick={() => {
+                    item.action();
+                    if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
+                    isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
+                  } ${
+                    theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
+                  }`}
+                  title={item.label}
+                >
+                  <span className="text-base">{item.icon}</span>
+                  {!isSidebarCollapsed && (
+                    <span className="truncate flex-grow animate-fade-in">{item.label}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* DYNAMIC GROUNDING MODAL SWITCHES */}
+          <div>
+            {!isSidebarCollapsed && (
+              <p className="px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 text-fuchsia-500 animate-fade-in">
+                Grounding & AI Modes
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {[
+                { 
+                  label: "Live Google Search", 
+                  icon: "🌐", 
+                  active: webSearchMode, 
+                  action: () => {
+                    setWebSearchMode(!webSearchMode);
+                    showToastAlert(!webSearchMode ? "🌐 Engaged Google Live search grounding!" : "🌐 Disabled web search grounding");
+                  } 
+                },
+                { 
+                  label: "Image Generation", 
+                  icon: "🎨", 
+                  active: isImageGenMode, 
+                  action: () => {
+                    const next = !isImageGenMode;
+                    setIsImageGenMode(next);
+                    if (next) setImageMode(false);
+                    showToastAlert(next ? "🎨 Engaged creative painting image generation mode!" : "🎨 Disabled painting mode");
+                  } 
+                },
+                { 
+                  label: "Multimodal Vision", 
+                  icon: "📸", 
+                  active: imageMode, 
+                  action: () => {
+                    const next = !imageMode;
+                    setImageMode(next);
+                    if (next) setIsImageGenMode(false);
+                    showToastAlert(next ? "🎨 Engaged graphic analysis canvas mode!" : "🎨 Disabled graphic mode");
+                  } 
+                },
+              ].map((item, id) => (
+                <button
+                  key={id}
+                  onClick={item.action}
+                  className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
+                    isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
+                  } ${
+                    item.active 
+                      ? theme === "dark" ? "bg-zinc-800 text-white font-bold" : "bg-zinc-200 text-zinc-900 font-bold"
+                      : theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
+                  }`}
+                  title={item.label}
+                >
+                  <div className="relative flex items-center justify-center">
+                    <span className="text-base">{item.icon}</span>
+                    {item.active && (
+                      <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 border border-white dark:border-zinc-900 rounded-full animate-pulse" />
+                    )}
+                  </div>
+                  {!isSidebarCollapsed && (
+                    <div className="flex-1 flex justify-between items-center min-w-0 animate-fade-in">
+                      <span className="truncate">{item.label}</span>
+                      <span className={`text-[8px] px-1.5 py-0.2 rounded font-mono font-bold uppercase ${
+                        item.active 
+                          ? "bg-green-500/15 text-green-400" 
+                          : "bg-zinc-500/10 text-zinc-400"
+                      }`}>
+                        {item.active ? "On" : "Off"}
+                      </span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* BOTTOM UTILITY RAILS PART */}
+        <div className={`mt-auto p-3.5 border-t border-zinc-200/50 dark:border-zinc-850/50 space-y-1.5 text-xs font-sans`}>
+          
+          {/* Configure Secrets trigger */}
+          <button
+            onClick={() => {
+              checkServerConfig();
+              setShowConfigModal(true);
+              if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
+            }}
+            className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
+              isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
+            } ${
+              theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
+            }`}
+            title="Configure Secrets API Keys"
+          >
+            <span className="text-base">🔑</span>
+            {!isSidebarCollapsed && (
+              <span className="truncate animate-fade-in text-emerald-500 dark:text-emerald-400">Settings & Keys</span>
+            )}
+          </button>
+
+          {/* Toggle visual mode switcher */}
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
+              isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
+            } ${
+              theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
+            }`}
+            title="Toggle theme view"
+          >
+            <span className="text-base">{theme === "dark" ? "☀️" : "🌙"}</span>
+            {!isSidebarCollapsed && (
+              <span className="truncate animate-fade-in">
+                {theme === "dark" ? "Light theme" : "Dark theme"}
+              </span>
+            )}
+          </button>
+
+          {/* Authentication identity strip */}
+          <div className="pt-2 border-t border-zinc-200/30 dark:border-zinc-800/40">
+            {user ? (
+              <div 
+                onClick={() => {
+                    setShowProfileDropdown(!showProfileDropdown);
+                }}
+                className={`w-full flex items-center rounded-xl transition-all text-left font-sans cursor-pointer ${
+                  isSidebarCollapsed ? "justify-center p-1.5" : "gap-2.5 p-1.5"
+                } hover:bg-zinc-50 dark:hover:bg-zinc-800/40`}
+                title="Profile Account Setup"
+              >
+                {user.photoURL ? (
+                  <img 
+                    src={user.photoURL} 
+                    alt="P" 
+                    referrerPolicy="no-referrer"
+                    className="w-7 h-7 rounded-full object-cover border border-blue-500/40"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-white flex items-center justify-center font-bold text-xs uppercase animate-pulse">
+                    {user.email?.charAt(0) || "U"}
+                  </div>
+                )}
+                
+                {!isSidebarCollapsed && (
+                  <div className="flex-1 min-w-0 animate-fade-in">
+                    <p className="font-bold text-[11px] truncate leading-tight">
+                      {user.displayName || user.email?.split("@")[0] || "NextGen User"}
+                    </p>
+                    <p className="text-[9px] opacity-55 truncate leading-none mt-0.5">
+                      {user.email}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setAuthError(null);
+                  setShowAuthModal(true);
+                  if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center rounded-xl transition-all font-bold text-left cursor-pointer ${
+                  isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
+                } ${
+                  theme === "dark"
+                    ? "bg-blue-650/10 hover:bg-blue-650/15 text-blue-400"
+                    : "bg-blue-50 hover:bg-blue-100 text-blue-600"
+                }`}
+                title="Sign In with Sandbox"
+              >
+                <span className="text-base">👤</span>
+                {!isSidebarCollapsed && <span className="animate-fade-in text-black dark:text-zinc-250">Sign In</span>}
+              </button>
+            )}
+          </div>
+
+        </div>
+
+      </aside>
+
+      {/* RIGHT SIDE MAIN VIEWPORT CONTAINER */}
+      <div className={`flex-grow flex flex-col min-w-0 h-screen overflow-hidden relative transition-colors duration-200 ${
+        theme === "dark" ? "bg-[#0b0c0d]" : "bg-white"
+      }`}>
+
+        {/* PREMIUM GEMINI-STYLE AURORA WAVE BACKGROUND LAYER */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10 select-none opacity-65 dark:opacity-40 transition-all duration-300">
+          <div className="absolute top-[5%] left-[10%] w-[80%] h-[75%] filter blur-[100px] mix-blend-normal animate-aurora-full">
+            <div className="absolute top-[20%] left-0 w-[30%] h-[40%] rounded-full bg-gradient-to-tr from-[#9b5de5] via-[#a2d2ff] to-[#00f5d4] opacity-80" />
+            <div className="absolute top-[10%] left-[25%] w-[40%] h-[45%] rounded-full bg-gradient-to-r from-[#00bbf9] via-[#fee440] to-[#f15bb5] opacity-75" />
+            <div className="absolute top-[5%] left-[55%] w-[35%] h-[40%] rounded-full bg-gradient-to-br from-[#fee440] via-[#f15bb5] to-[#9b5de5] opacity-80" />
+          </div>
+          
+          {/* Beautifully curved organic ribbon wave resembling the user's uploaded image */}
+          <svg className="absolute top-[10%] left-[-5%] w-[110%] h-[75%] opacity-90 scale-y-110 animate-aurora-full" viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g filter="url(#glow-wave-blur)">
+              {/* Dynamic glowing composite curve 1 */}
+              <path 
+                d="M -100,280 C 150,330 320,130 650,225 C 980,320 1150,80 1540,160 L 1540,550 L -100,550 Z" 
+                fill="url(#aurora-glow-1)" 
+                opacity="0.8" 
+                className="animate-wave-1"
+              />
+              {/* Dynamic glowing composite curve 2 */}
+              <path 
+                d="M -100,310 C 200,230 450,110 750,195 C 1050,280 1200,60 1540,110 L 1540,550 L -100,550 Z" 
+                fill="url(#aurora-glow-2)" 
+                opacity="0.75" 
+                className="animate-wave-2"
+              />
+            </g>
+            <defs>
+              <filter id="glow-wave-blur" x="-10%" y="-10%" width="120%" height="120%">
+                <feGaussianBlur stdDeviation="75" />
+              </filter>
+              <linearGradient id="aurora-glow-1" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#a78bfa" stopOpacity="0.4" />
+                <stop offset="20%" stopColor="#60a5fa" stopOpacity="0.85" />
+                <stop offset="45%" stopColor="#34d399" stopOpacity="0.9" />
+                <stop offset="65%" stopColor="#fbbf24" stopOpacity="0.85" />
+                <stop offset="85%" stopColor="#f472b6" stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#ec4899" stopOpacity="0.3" />
+              </linearGradient>
+              <linearGradient id="aurora-glow-2" x1="0" y1="0.3" x2="1" y2="0.3">
+                <stop offset="5%" stopColor="#c084fc" stopOpacity="0.2" />
+                <stop offset="30%" stopColor="#38bdf8" stopOpacity="0.8" />
+                <stop offset="55%" stopColor="#facc15" stopOpacity="0.9" />
+                <stop offset="75%" stopColor="#fb7185" stopOpacity="0.8" />
+                <stop offset="95%" stopColor="#e879f9" stopOpacity="0.3" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        {/* Subtle Toast Notifications */}
+        {apiError && (
+          <div className={`fixed bottom-5 right-5 z-50 max-w-sm p-3.5 rounded-xl shadow-xl flex items-center gap-3 animate-fade-in border ${
+            theme === "dark" 
+              ? "bg-[#1e1e20] border-zinc-800 text-zinc-200" 
+              : "bg-white border-zinc-200 text-zinc-800 border-zinc-300"
+          }`} id="sleek-toast-alert">
+            <span className="text-base shrink-0">✨</span>
+            <p className="text-[11px] font-semibold leading-normal flex-1">{apiError}</p>
+            <button onClick={() => setApiError(null)} className="opacity-50 hover:opacity-100 transition-opacity shrink-0 cursor-pointer">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* --- INTEGRATED NAV HEADER --- */}
       <header className={`px-5 py-3.5 flex items-center justify-between border-b ${
         theme === "dark" ? "border-zinc-800/60 bg-[#131314]/90" : "bg-white/90 border-zinc-200/60"
       } sticky top-0 z-40 backdrop-blur-md`}>
         <div className="flex items-center gap-3">
+          {/* Header Hamburger built for mobile */}
+          <button
+            onClick={() => {
+              if (window.innerWidth < 768) {
+                setIsMobileSidebarOpen(true);
+              } else {
+                setIsSidebarCollapsed(!isSidebarCollapsed);
+                localStorage.setItem("nextgen_sidebar_collapsed", String(!isSidebarCollapsed));
+              }
+            }}
+            className={`p-2 rounded-lg transition-all flex md:hidden items-center justify-center cursor-pointer ${
+              theme === "dark" ? "hover:bg-zinc-800 text-zinc-350 hover:text-white animate-pulse" : "hover:bg-zinc-100 text-zinc-650 hover:text-[#1f1f1f] shadow-xs"
+            }`}
+            title="Toggle Sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           {/* Main customized logo icon matching uploaded design */}
-          <div className="relative w-11 h-11 flex items-center justify-center p-0.5 rounded-xl bg-zinc-900 select-none border border-zinc-800">
-            <svg className="w-9 h-9" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Outer dotted/dashed frame */}
-              <path
-                d="M 50 8 Q 50 50 92 50 Q 50 50 50 92 Q 50 50 8 50 Q 50 50 50 8 Z"
-                stroke="#3B82F6"
-                strokeWidth="2.5"
-                strokeDasharray="4 3"
-                strokeLinecap="round"
-                fill="none"
-                className="opacity-95"
-              />
-              <path
-                d="M 50 3 Q 50 50 97 50 Q 50 50 50 97 Q 50 50 3 50 Q 50 50 50 3 Z"
-                stroke="#60A5FA"
-                strokeWidth="1.2"
-                strokeDasharray="1 4"
-                strokeLinecap="round"
-                fill="none"
-                className="opacity-40"
-              />
-              {/* Inner solid sparkle star with subtle gradient fill */}
-              <path
-                d="M 50 18 Q 50 50 82 50 Q 50 50 50 82 Q 50 50 18 50 Q 50 50 50 18 Z"
-                fill="url(#nextgenai-solid-logo-grad)"
-              />
-              <defs>
-                <linearGradient id="nextgenai-solid-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#2563EB" />
-                  <stop offset="100%" stopColor="#3B82F6" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <h1 className="font-display font-black text-xl tracking-tight leading-none flex items-center">
-              <span className="text-[#3B82F6]">NextGen</span>
-              <span className="bg-gradient-to-r from-blue-500 via-[#8b5cf6] to-[#a855f7] bg-clip-text text-transparent">Ai</span>
+          <div className="flex items-center gap-2 select-none">
+            <div className="w-6 h-6 text-[#131415] dark:text-white flex items-center justify-center shrink-0">
+              <svg className="w-5.5 h-5.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2Q12 12 22 12Q12 12 12 22Q12 12 2 12Q12 12 12 2Z" fill="currentColor" />
+              </svg>
+            </div>
+            <h1 className="font-sans font-semibold text-lg tracking-tight leading-none text-[#131415] dark:text-white">
+              NextGenAi
             </h1>
-          </div>
-
-          {/* Interactive Platform Playpen Tools next to Logo */}
-          <div className="relative flex items-center ml-2" ref={headerToolsRef}>
-            <button
-              onClick={() => setIsHeaderToolsOpen(!isHeaderToolsOpen)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-                theme === "dark" 
-                  ? isHeaderToolsOpen 
-                    ? "bg-zinc-800 border-zinc-700 text-white" 
-                    : "border-zinc-800 hover:bg-zinc-800 bg-zinc-900/40 text-zinc-300" 
-                  : isHeaderToolsOpen 
-                    ? "bg-zinc-100 border-zinc-300 text-zinc-800" 
-                    : "border-zinc-200 hover:bg-zinc-100 bg-zinc-50 text-zinc-700"
-              }`}
-              title="Interactive Platform Playpen Tools"
-            >
-              <span>🛠️</span>
-              <span className="hidden sm:inline">Tools</span>
-              <span className={`text-[9px] transition-transform duration-200 ${isHeaderToolsOpen ? "rotate-180" : ""}`}>▼</span>
-            </button>
-
-            {/* Premium Tools Dropdown Menu */}
-            {isHeaderToolsOpen && (
-              <div 
-                id="mega-tools-dropdown"
-                className={`absolute left-[-40px] md:left-[-120px] lg:left-[-180px] top-11 w-[92vw] sm:w-[600px] md:w-[760px] lg:w-[980px] max-h-[85vh] overflow-y-auto rounded-3xl border p-6 shadow-2xl animate-fade-in z-50 ${
-                  theme === "dark"
-                    ? "bg-zinc-950 border-zinc-800 text-zinc-100 shadow-black/90"
-                    : "bg-white border-zinc-200 text-zinc-800 shadow-zinc-300/40"
-                }`}
-              >
-                {/* Header branding band */}
-                <div className="pb-4 mb-5 border-b border-zinc-200/50 dark:border-zinc-850 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🛠️</span>
-                    <span className="text-xs uppercase font-bold tracking-widest opacity-60">NextGenAi Workspace Portal</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono opacity-80 bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded uppercase font-bold">Systems Ready</span>
-                    <button 
-                      onClick={() => setIsHeaderToolsOpen(false)}
-                      className="p-1 hover:bg-zinc-800/10 dark:hover:bg-zinc-800 rounded-lg text-zinc-400 cursor-pointer"
-                    >
-                      ❌
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6">
-                  {/* Column 1: REASONING (NVIDIA) */}
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 dark:text-zinc-500 mb-3.5 block font-display">
-                      🧠 REASONING (LLMS)
-                    </span>
-                    <div className="flex flex-col space-y-1">
-                      {TEXT_MODELS.filter(m => m.id.includes("/")).map((m) => {
-                        const isSelected = !imageMode && activeTextModel === m.id;
-                        return (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => {
-                              changeTextModel(m.id);
-                              setImageMode(false);
-                              setIsHeaderToolsOpen(false);
-                            }}
-                            className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                              isSelected
-                                ? "text-amber-500 font-bold bg-amber-500/5 dark:bg-amber-500/10"
-                                : theme === "dark"
-                                  ? "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                                  : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                            }`}
-                          >
-                            <span className="text-sm">{m.avatar}</span>
-                            <span className="truncate flex-1">{m.name}</span>
-                            {isSelected && <span className="text-amber-500 text-[10px]">✨</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Column 2: CORE INFERENCE */}
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 dark:text-zinc-500 mb-3.5 block font-display">
-                      ⚡ CORE INFERENCE
-                    </span>
-                    <div className="flex flex-col space-y-1">
-                      {TEXT_MODELS.filter(m => !m.id.includes("/")).map((m) => {
-                        const isSelected = !imageMode && activeTextModel === m.id;
-                        return (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => {
-                              changeTextModel(m.id);
-                              setImageMode(false);
-                              setIsHeaderToolsOpen(false);
-                            }}
-                            className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                              isSelected
-                                ? "text-amber-500 font-bold bg-amber-500/5 dark:bg-amber-500/10"
-                                : theme === "dark"
-                                  ? "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                                  : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                            }`}
-                          >
-                            <span className="text-sm">{m.avatar}</span>
-                            <span className="truncate flex-1">{m.name}</span>
-                            {isSelected && <span className="text-amber-500 text-[10px]">✨</span>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Column 3: CREATIVE GRAPHIC */}
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 dark:text-zinc-500 mb-3.5 block font-display">
-                      🎨 CREATIVE CANVAS
-                    </span>
-                    <div className="flex flex-col space-y-1.5">
-                      {/* Image Gen toggle */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = !isImageGenMode;
-                          setIsImageGenMode(next);
-                          if (next) setImageMode(false);
-                          showToastAlert(next ? "🎨 Engaged creative painting image generation mode!" : "🎨 Disabled painting mode");
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          isImageGenMode
-                            ? "text-purple-500 font-bold bg-purple-500/5 dark:bg-purple-500/10"
-                            : theme === "dark"
-                              ? "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                              : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">🎨</span>
-                        <span className="truncate flex-1 font-semibold text-purple-500">Image Generation Mode</span>
-                        <span className={`text-[8px] font-bold uppercase px-1.5 py-0.2 rounded ${
-                          isImageGenMode ? "bg-purple-500/20 text-purple-400" : "bg-zinc-500/20 text-zinc-400"
-                        }`}>
-                          {isImageGenMode ? "Active" : "Off"}
-                        </span>
-                      </button>
-
-                      {/* Multimodal toggle */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = !imageMode;
-                          setImageMode(next);
-                          if (next) setIsImageGenMode(false);
-                          showToastAlert(next ? "🎨 Engaged graphic analysis canvas mode!" : "🎨 Disabled graphic mode");
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          imageMode
-                            ? "text-purple-500 font-bold bg-purple-500/5 dark:bg-purple-500/10"
-                            : theme === "dark"
-                              ? "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                              : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">📸</span>
-                        <span className="truncate flex-1 font-semibold text-purple-500">Multimodal Vision</span>
-                        <span className={`text-[8px] font-bold uppercase px-1.5 py-0.2 rounded ${
-                          imageMode ? "bg-purple-500/20 text-purple-400" : "bg-zinc-500/20 text-zinc-400"
-                        }`}>
-                          {imageMode ? "Active" : "Off"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Column 4: GROUNDING & DATAS */}
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 dark:text-zinc-500 mb-3.5 block font-display">
-                      🌐 GROUNDING SYSTEM
-                    </span>
-                    <div className="flex flex-col space-y-1">
-                      {/* Web search toggle */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = !webSearchMode;
-                          setWebSearchMode(next);
-                          showToastAlert(next ? "🌐 Engaged Google Live search grounding!" : "🌐 Disabled web search grounding");
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          webSearchMode
-                            ? "text-blue-500 font-bold bg-blue-500/5 dark:bg-blue-500/10"
-                            : theme === "dark"
-                              ? "text-zinc-300 hover:text-white hover:bg-zinc-900"
-                              : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">🌐</span>
-                        <span className="truncate flex-1 font-semibold text-blue-500">Google Live Search</span>
-                        <span className={`text-[8px] font-bold uppercase px-1.5 py-0.2 rounded ${
-                          webSearchMode ? "bg-blue-500/20 text-blue-400" : "bg-zinc-500/20 text-zinc-400"
-                        }`}>
-                          {webSearchMode ? "On" : "Off"}
-                        </span>
-                      </button>
-
-                      {/* Google Drive Launcher */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsHeaderToolsOpen(false);
-                          setShowDriveModal(true);
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          theme === "dark" ? "text-zinc-300 hover:text-white hover:bg-zinc-900" : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">📂</span>
-                        <span className="truncate flex-1">Google Drive Docs</span>
-                      </button>
-
-                      {/* PDF.co Document Suite Launcher */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsHeaderToolsOpen(false);
-                          setShowPdfcoModal(true);
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          theme === "dark" ? "text-zinc-300 hover:text-white hover:bg-zinc-900" : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">📄</span>
-                        <span className="truncate flex-1 font-semibold text-emerald-500">PDF.co Document Suite</span>
-                      </button>
-
-                      {/* Google Flights Search Launcher */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsHeaderToolsOpen(false);
-                          setShowFlightsModal(true);
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          theme === "dark" ? "text-zinc-300 hover:text-white hover:bg-zinc-900" : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">✈️</span>
-                        <span className="truncate flex-1 font-semibold text-blue-500">Google Flights (SerpApi)</span>
-                      </button>
-
-                      {/* Google Shopping Search Launcher */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsHeaderToolsOpen(false);
-                          setShowShoppingModal(true);
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          theme === "dark" ? "text-zinc-300 hover:text-white hover:bg-zinc-900" : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">🛒</span>
-                        <span className="truncate flex-1 font-semibold text-amber-500">Google Shopping (Serper)</span>
-                      </button>
-
-                      {/* Google Images Launcher */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsHeaderToolsOpen(false);
-                          setShowImagesModal(true);
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          theme === "dark" ? "text-zinc-300 hover:text-white hover:bg-zinc-900" : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">🖼️</span>
-                        <span className="truncate flex-1 font-semibold text-[#8B5CF6]">Google Images (Serper)</span>
-                      </button>
-
-                      {/* Walmart Search Launcher */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsHeaderToolsOpen(false);
-                          setShowWalmartModal(true);
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          theme === "dark" ? "text-zinc-300 hover:text-white hover:bg-zinc-900" : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">🏬</span>
-                        <span className="truncate flex-1 font-semibold text-sky-500">Walmart Search (SerpApi)</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Column 5: VAULT SECURITY */}
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 dark:text-zinc-500 mb-3.5 block font-display">
-                      ⚙️ VAULT SECURITY
-                    </span>
-                    <div className="flex flex-col space-y-1">
-                      {/* Secrets Panel */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsHeaderToolsOpen(false);
-                          checkServerConfig();
-                          setShowConfigModal(true);
-                        }}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-[11.5px] text-left transition-all flex items-center gap-2 cursor-pointer ${
-                          theme === "dark" ? "text-zinc-300 hover:text-white hover:bg-zinc-900" : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100"
-                        }`}
-                      >
-                        <span className="text-sm">🔑</span>
-                        <span className="truncate flex-1 text-emerald-505 font-semibold dark:text-emerald-400">Configure Secrets</span>
-                      </button>
-
-
-
-                      {/* AI Avatar quick display */}
-                      <div className={`px-2.5 py-2 rounded-lg text-[10.5px] mt-2 flex items-center gap-2 border border-zinc-200/50 dark:border-zinc-850/50 ${
-                        theme === "dark" ? "text-zinc-400" : "text-zinc-650"
-                      }`}>
-                        <span>{selectedAiAvatar}</span>
-                        <span className="truncate">Avatar: <b>Active</b></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -2909,11 +3117,76 @@ export default function App() {
       </header>
 
       {/* --- SCROLL CONTAINED MESSAGE CONTAINER --- */}
-      <main className="flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 py-8 w-full max-w-full mx-auto flex flex-col justify-between">
+      <main className="relative flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 py-8 w-full max-w-full mx-auto flex flex-col justify-between">
         
+        {messages.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none z-0">
+            <svg viewBox="0 0 1200 600" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-[130%] md:w-[120%] max-w-6xl h-auto opacity-80 dark:opacity-40 transition-all duration-1000 transform animate-vibe-slow">
+              <defs>
+                <linearGradient id="purple-blue" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#c084fc" stopOpacity="0" />
+                  <stop offset="20%" stopColor="#a855f7" stopOpacity="0.45" />
+                  <stop offset="60%" stopColor="#3b82f6" stopOpacity="0.80" />
+                  <stop offset="100%" stopColor="#14b8a6" stopOpacity="0.15" />
+                </linearGradient>
+                <linearGradient id="yellow-green" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="20%" stopColor="#22c55e" stopOpacity="0" />
+                  <stop offset="45%" stopColor="#10b981" stopOpacity="0.60" />
+                  <stop offset="62%" stopColor="#fbbf24" stopOpacity="0.85" />
+                  <stop offset="80%" stopColor="#f97316" stopOpacity="0.50" />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="rose-gold" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="50%" stopColor="#f59e0b" stopOpacity="0" />
+                  <stop offset="68%" stopColor="#ec4899" stopOpacity="0.80" />
+                  <stop offset="85%" stopColor="#d946ef" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+                </linearGradient>
+                <filter id="aurora-blur" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="55" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              {/* Background glow path 1 - Indigo/Blue/Teal */}
+              <path 
+                d="M -100 360 C 200 480, 480 240, 720 180 C 960 120, 1100 280, 1300 350" 
+                stroke="url(#purple-blue)" 
+                strokeWidth="80" 
+                strokeLinecap="round" 
+                filter="url(#aurora-blur)" 
+                className="animate-drift-forward"
+              />
+
+              {/* Foreground path 2 - Yellow/Green/Orange core */}
+              <path 
+                d="M -50 400 C 150 420, 520 200, 700 120 C 880 40, 1080 180, 1250 290" 
+                stroke="url(#yellow-green)" 
+                strokeWidth="60" 
+                strokeLinecap="round" 
+                filter="url(#aurora-blur)" 
+                className="animate-drift-backward"
+              />
+
+              {/* Overlap path 3 - Vibrant Rose/Pink curtain near the peak */}
+              <path 
+                d="M 200 270 C 400 150, 680 80, 880 120 C 1080 160, 1150 240, 1250 300" 
+                stroke="url(#rose-gold)" 
+                strokeWidth="50" 
+                strokeLinecap="round" 
+                filter="url(#aurora-blur)" 
+                className="animate-drift-forward"
+              />
+            </svg>
+          </div>
+        )}
+
         {messages.length === 0 ? (
           // Welcome workflow state dashboard
-          <div className="my-auto py-8 space-y-10 animate-fade-in w-full max-w-2xl mx-auto flex flex-col items-center justify-center text-center">
+          <div className="relative z-10 my-auto py-8 space-y-10 animate-fade-in w-full max-w-2xl mx-auto flex flex-col items-center justify-center text-center">
             <div className="space-y-4 max-w-xl mx-auto flex flex-col items-center">
               <h2 className="text-3xl md:text-5xl font-display font-bold tracking-tight leading-tight">
                 {user ? (
@@ -2926,9 +3199,11 @@ export default function App() {
                 ) : (
                   <>
                     Welcome to{" "}
-                    <span className="inline-flex items-center font-black">
-                      <span className="text-[#3B82F6]">NextGen</span>
-                      <span className="bg-gradient-to-r from-blue-500 via-[#8b5cf6] to-[#a855f7] bg-clip-text text-transparent">Ai</span>
+                    <span className="inline-flex items-center gap-2 font-sans font-semibold text-[#131415] dark:text-white">
+                      <svg className="w-7 h-7 text-[#131415] dark:text-white flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2Q12 12 22 12Q12 12 12 22Q12 12 2 12Q12 12 12 2Z" fill="currentColor" />
+                      </svg>
+                      NextGenAi
                     </span>
                   </>
                 )}
@@ -5748,7 +6023,7 @@ export default function App() {
       )}
 
       {/* --- PREMIUM FIREBASE AUTHENTICATION DIALOG MODAL --- */}
-      {showAuthModal && (
+      {false && showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
           <div className={`border p-6 rounded-3xl max-w-sm w-full space-y-5 shadow-2xl relative transition-all duration-300 ${
             theme === "dark" 
@@ -5772,26 +6047,9 @@ export default function App() {
 
             {/* Modal Heading Header */}
             <div className="text-center space-y-2">
-              <div className="relative w-11 h-11 flex items-center justify-center p-0.5 rounded-2xl bg-gradient-to-tr from-blue-500/10 via-purple-500/5 to-pink-500/10 mx-auto border border-blue-500/10 mb-2">
-                <svg className="w-9 h-9" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M 50 8 Q 50 50 92 50 Q 50 50 50 92 Q 50 50 8 50 Q 50 50 50 8 Z"
-                    stroke="#3B82F6"
-                    strokeWidth="3"
-                    strokeDasharray="4 3"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                  <path
-                    d="M 50 18 Q 50 50 82 50 Q 50 50 50 82 Q 50 50 18 50 Q 50 50 50 18 Z"
-                    fill="url(#logo-grad-auth)"
-                  />
-                  <defs>
-                    <linearGradient id="logo-grad-auth" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#2563EB" />
-                      <stop offset="100%" stopColor="#3B82F6" />
-                    </linearGradient>
-                  </defs>
+              <div className="relative w-12 h-12 flex items-center justify-center p-0.5 rounded-full select-none mx-auto border border-zinc-200 dark:border-zinc-800/80 mb-2 bg-zinc-50 dark:bg-zinc-900">
+                <svg className="w-6 h-6 text-[#131415] dark:text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2Q12 12 22 12Q12 12 12 22Q12 12 2 12Q12 12 12 2Z" fill="currentColor" />
                 </svg>
               </div>
               <h3 className="text-lg font-display font-black tracking-tight leading-none text-zinc-900 dark:text-white">
@@ -5869,7 +6127,15 @@ export default function App() {
                     Signing progress...
                   </span>
                 ) : (
-                  <span>{isSignUp ? "Register Account Profile" : "Sign In to Sandbox"}</span>
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.08H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.92l3.66-2.83z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.08l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38z"/>
+                    </svg>
+                    {isSignUp ? "Register Account Profile" : "Sign In to Sandbox"}
+                  </span>
                 )}
               </button>
             </form>
@@ -5961,6 +6227,7 @@ export default function App() {
         </div>
       )}
 
+      </div> {/* RIGHT SIDE MAIN VIEWPORT CONTAINER */}
     </div>
   );
 }

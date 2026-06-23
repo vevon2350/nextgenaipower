@@ -298,17 +298,20 @@ const PORT = 3000;
     
     const presignedData: any = await presignedRes.json();
     if (presignedData.error) {
-      throw new Error(`PDF.co Presigned URL Error: ${presignedData.message}`);
+      throw new Error(`PDF.co Presigned URL Error: ${presignedData.message || "Unknown error"}`);
     }
     
-    const { url, uploadedUrl } = presignedData;
-    if (!url || !uploadedUrl) {
-      throw new Error("Invalid presigned upload parameters returned from PDF.co");
+    // PDF.co returns 'presignedUrl' for the S3 upload destination, and 'url' for the uploaded file access.
+    const putUrl = presignedData.presignedUrl || presignedData.url;
+    const uploadedUrl = presignedData.url || presignedData.uploadedUrl;
+    
+    if (!putUrl || !uploadedUrl) {
+      throw new Error(`Invalid presigned upload parameters returned from PDF.co. Keys in response: ${Object.keys(presignedData).join(", ")}`);
     }
     
     // 2. Transmit file binary payload
     const fileBuffer = Buffer.from(base64Data, "base64");
-    const uploadRes = await fetch(url, {
+    const uploadRes = await fetch(putUrl, {
       method: "PUT",
       headers: {
         "Content-Type": cleanMime,

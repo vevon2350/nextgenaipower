@@ -23,6 +23,110 @@
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Beautiful dynamic Aurora Vibe background animations */
+@keyframes aurora-vibe {
+  0% {
+    transform: translate(0px, 0px) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.05) rotate(1.5deg);
+  }
+  66% {
+    transform: translate(-40px, 30px) scale(0.97) rotate(-1.2deg);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes wave-drift-1 {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -2000;
+  }
+}
+
+@keyframes wave-drift-2 {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 2000;
+  }
+}
+
+@keyframes full-screen-aurora-glow {
+  0% {
+    transform: scale(1) translate(0px, 0px) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.06) translate(20px, -15px) rotate(1.5deg);
+  }
+  50% {
+    transform: scale(0.96) translate(-15px, 10px) rotate(-1deg);
+  }
+  75% {
+    transform: scale(1.03) translate(10px, -8px) rotate(0.8deg);
+  }
+  100% {
+    transform: scale(1) translate(0px, 0px) rotate(0deg);
+  }
+}
+
+@keyframes wave-layer-1 {
+  0% {
+    transform: translate(0px, 0px) scaleY(1);
+  }
+  50% {
+    transform: translate(-25px, 10px) scaleY(1.05);
+  }
+  100% {
+    transform: translate(0px, 0px) scaleY(1);
+  }
+}
+
+@keyframes wave-layer-2 {
+  0% {
+    transform: translate(0px, 0px) scaleY(1);
+  }
+  50% {
+    transform: translate(20px, -8px) scaleY(0.96);
+  }
+  100% {
+    transform: translate(0px, 0px) scaleY(1);
+  }
+}
+
+.animate-vibe-slow {
+  animation: aurora-vibe 24s ease-in-out infinite;
+}
+
+.animate-drift-forward {
+  stroke-dasharray: 2000;
+  animation: wave-drift-1 40s linear infinite;
+}
+
+.animate-drift-backward {
+  stroke-dasharray: 2000;
+  animation: wave-drift-2 50s linear infinite;
+}
+
+.animate-aurora-full {
+  animation: full-screen-aurora-glow 24s ease-in-out infinite;
+}
+
+.animate-wave-1 {
+  animation: wave-layer-1 15s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.animate-wave-2 {
+  animation: wave-layer-2 20s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
 /* Scrollbar aesthetic rules */
 ::-webkit-scrollbar {
   width: 6px;
@@ -41,8 +145,15 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.35);
 }
+@keyframes indian-flag-wave {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
 
-/* Dynamic Markdown Prose Typography & Contrast Overrides */
+.animate-flag-wave {
+  animation: indian-flag-wave 3s ease-in-out infinite;
+}
 .prose {
   word-wrap: break-word;
   overflow-wrap: break-word;
