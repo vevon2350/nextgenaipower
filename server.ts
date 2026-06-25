@@ -933,7 +933,6 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
         textModel.includes("bytedance/seed-oss-36b-instruct") ||
         textModel.includes("openai/gpt-oss-120b") ||
         textModel.includes("openai/gpt-oss-20b") ||
-        textModel.includes("openai/gpt-oss-safeguard-20b") ||
         textModel.includes("microsoft/phi-4-mini-instruct") ||
         textModel.includes("upstage/solar-10.7b-instruct")
       );
