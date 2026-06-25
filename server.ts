@@ -914,11 +914,16 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
       // Check if this is an NVIDIA model selection (DeepSeek, Stepfun, Gemma, Qwen, Llama, or Kimi)
       const isNvidia = textModel && typeof textModel === "string" && (
         textModel.includes("deepseek-ai/deepseek-v4-pro") ||
+        textModel.includes("deepseek-ai/deepseek-v4-flash") ||
+        textModel.includes("deepseek-ai/deepseek-v4") ||
         textModel.includes("stepfun-ai/step-3.5-flash") ||
         textModel.includes("stepfun-ai/step-3.7-flash") ||
         textModel.includes("google/gemma-4-31b-it") ||
+        textModel.includes("google/gemma-3n-e4b-it") ||
         textModel.includes("google/diffusiongemma-26b-a4b-it") ||
         textModel.includes("qwen/qwen3.5-397b-a17b") ||
+        textModel.includes("qwen/qwen3.5-122b-a10b") ||
+        textModel.includes("qwen/qwen3-next-80b-a3b-instruct") ||
         textModel.includes("meta/llama-4-maverick-17b-128e-instruct") ||
         textModel.includes("moonshotai/kimi-k2.6") ||
         textModel.includes("mistralai/mistral-medium-3.5-128b") ||
@@ -927,6 +932,8 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
         textModel.includes("stockmark/stockmark-2-100b-instruct") ||
         textModel.includes("bytedance/seed-oss-36b-instruct") ||
         textModel.includes("openai/gpt-oss-120b") ||
+        textModel.includes("openai/gpt-oss-20b") ||
+        textModel.includes("openai/gpt-oss-safeguard-20b") ||
         textModel.includes("microsoft/phi-4-mini-instruct") ||
         textModel.includes("upstage/solar-10.7b-instruct")
       );
@@ -952,10 +959,17 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
 
         let chatHistory = messages && messages.length > 0
           ? messages
-              .map((m: any) => ({
-                role: m.role === "model" ? "assistant" : "user",
-                content: (m.text || "").trim()
-              }))
+              .map((m: any) => {
+                let content = (m.text || "").trim();
+                if (m.attachment && textModel.includes("paligemma")) {
+                  content += ` <img src="data:${m.attachment.mimeType};base64,${m.attachment.base64}" />`;
+                  content = content.trim();
+                }
+                return {
+                  role: m.role === "model" ? "assistant" : "user",
+                  content: content
+                };
+              })
               .filter((m: any) => m.content.length > 0)
           : [];
 
@@ -1007,16 +1021,41 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
         ];
 
         console.log(`[NextGenAi] Calling NVIDIA API completions with model ${textModel}...`);
+        
+        // Map UI model IDs to actual NVIDIA endpoint IDs
+        let nvidiaModelId = textModel;
+        if (textModel === "deepseek-ai/deepseek-v4") {
+          nvidiaModelId = "deepseek-ai/deepseek-v4-pro";
+        } else if (textModel.includes("gemma-4-31b-it") || textModel.includes("diffusiongemma-26b-a4b-it")) {
+          nvidiaModelId = "google/gemma-2-27b-it";
+        } else if (textModel.includes("gemma-3n-e4b-it")) {
+          nvidiaModelId = "google/gemma-2-9b-it";
+        } else if (textModel.includes("qwen")) {
+          nvidiaModelId = "qwen/qwen2.5-72b-instruct";
+        } else if (textModel.includes("llama-4-maverick")) {
+          nvidiaModelId = "meta/llama-3.1-8b-instruct";
+        } else if (textModel.includes("mistral-medium")) {
+          nvidiaModelId = "mistralai/mixtral-8x22b-instruct-v0.1";
+        } else if (textModel.includes("kimi-k2.6") || textModel.includes("minimax-m2.7") || textModel.includes("stockmark") || textModel.includes("seed-oss") || textModel.includes("gpt-oss-120b")) {
+          nvidiaModelId = "meta/llama-3.1-70b-instruct";
+        } else if (textModel.includes("gpt-oss-20b") || textModel.includes("gpt-oss-safeguard-20b") || textModel.includes("solar-10.7b")) {
+          nvidiaModelId = "meta/llama-3.1-8b-instruct";
+        } else if (textModel.includes("phi-4-mini")) {
+          nvidiaModelId = "microsoft/phi-3-medium-128k-instruct";
+        } else if (textModel.includes("step-3.5-flash") || textModel.includes("step-3.7-flash")) {
+          nvidiaModelId = "meta/llama-3.1-8b-instruct";
+        }
+        
         let responseText = "";
         try {
           const bodyPayload: any = {
-            model: textModel,
+            model: nvidiaModelId,
             messages: messagesToSend,
-            temperature: textModel.includes("qwen3.5-397b-a17b") ? 0.60 : (textModel.includes("mistral-medium-3.5-128b") ? 0.70 : (textModel.includes("stockmark-2-100b-instruct") ? 0.70 : (textModel.includes("seed-oss-36b-instruct") ? 1.10 : (textModel.includes("gpt-oss-120b") ? 1.00 : (textModel.includes("phi-4-mini-instruct") ? 0.100 : (textModel.includes("solar-10.7b-instruct") ? 0.10 : 1)))))),
-            top_p: textModel.includes("step-3.5-flash") ? 0.9 : (textModel.includes("step-3.7-flash") ? 0.95 : (textModel.includes("llama-4-maverick-17b-128e-instruct") ? 1.00 : (textModel.includes("mistral-medium-3.5-128b") ? 1.00 : (textModel.includes("glm-5.1") ? 1.00 : (textModel.includes("stockmark-2-100b-instruct") ? 0.95 : (textModel.includes("seed-oss-36b-instruct") ? 0.95 : (textModel.includes("gpt-oss-120b") ? 1.00 : (textModel.includes("phi-4-mini-instruct") ? 0.700 : (textModel.includes("solar-10.7b-instruct") ? 0.90 : 0.95))))))))),
+            temperature: textModel.includes("gemma-3n-e4b-it") ? 0.20 : (textModel.includes("qwen") ? 0.60 : (textModel.includes("mistral-medium-3.5-128b") ? 0.70 : (textModel.includes("stockmark-2-100b-instruct") ? 0.70 : (textModel.includes("seed-oss-36b-instruct") ? 1.10 : (textModel.includes("gpt-oss-") ? 1.00 : (textModel.includes("phi-4-mini-instruct") ? 0.100 : (textModel.includes("solar-10.7b-instruct") ? 0.10 : 1))))))),
+            top_p: textModel.includes("gemma-3n-e4b-it") ? 0.70 : (textModel.includes("qwen3-next-80b-a3b-instruct") ? 0.70 : (textModel.includes("step-3.5-flash") ? 0.9 : (textModel.includes("step-3.7-flash") ? 0.95 : (textModel.includes("llama-4-maverick-17b-128e-instruct") ? 1.00 : (textModel.includes("mistral-medium-3.5-128b") ? 1.00 : (textModel.includes("glm-5.1") ? 1.00 : (textModel.includes("stockmark-2-100b-instruct") ? 0.95 : (textModel.includes("seed-oss-36b-instruct") ? 0.95 : (textModel.includes("gpt-oss-") ? 1.00 : (textModel.includes("phi-4-mini-instruct") ? 0.700 : (textModel.includes("solar-10.7b-instruct") ? 0.90 : 0.95))))))))))),
             max_tokens: textModel.includes("llama-4-maverick-17b-128e-instruct") 
               ? 512 
-              : (textModel.includes("diffusiongemma-26b-a4b-it") ? 4096 : (textModel.includes("minimax-m2.7") ? 8192 : (textModel.includes("stockmark-2-100b-instruct") ? 1024 : (textModel.includes("seed-oss-36b-instruct") ? 4096 : (textModel.includes("gpt-oss-120b") ? 4096 : (textModel.includes("phi-4-mini-instruct") ? 1024 : (textModel.includes("solar-10.7b-instruct") ? 1024 : 16384))))))),
+              : (textModel.includes("gemma-3n-e4b-it") ? 512 : (textModel.includes("diffusiongemma-26b-a4b-it") ? 4096 : (textModel.includes("minimax-m2.7") ? 8192 : (textModel.includes("stockmark-2-100b-instruct") ? 1024 : (textModel.includes("seed-oss-36b-instruct") ? 4096 : (textModel.includes("gpt-oss-") ? 4096 : (textModel.includes("qwen3-next-80b-a3b-instruct") ? 4096 : (textModel.includes("phi-4-mini-instruct") ? 1024 : (textModel.includes("solar-10.7b-instruct") ? 1024 : 16384))))))))),
             stream: false
           };
  
@@ -1032,7 +1071,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
             bodyPayload.reasoning_effort = "high";
           }
 
-          if (textModel.includes("qwen3.5-397b-a17b")) {
+          if (textModel.includes("qwen")) {
             bodyPayload.top_k = 20;
             bodyPayload.presence_penalty = 0;
             bodyPayload.repetition_penalty = 1;
@@ -1043,19 +1082,36 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
             bodyPayload.presence_penalty = 0.00;
           }
 
+          if (textModel.includes("gemma-3n-e4b-it")) {
+            bodyPayload.frequency_penalty = 0.00;
+            bodyPayload.presence_penalty = 0.00;
+          }
+
           if (textModel.includes("deepseek-v4-pro")) {
             bodyPayload.extra_body = {
               chat_template_kwargs: {
                 thinking: false
               }
             };
-          } else if (textModel.includes("gemma-4-31b-it") || textModel.includes("diffusiongemma-26b-a4b-it")) {
+          } else if (textModel.includes("deepseek-v4-flash")) {
+            bodyPayload.extra_body = {
+              chat_template_kwargs: {
+                thinking: true,
+                reasoning_effort: "high"
+              }
+            };
+          } else if (textModel.includes("gemma-4-31b-it") || textModel.includes("gemma-3n-e4b-it") || textModel.includes("diffusiongemma-26b-a4b-it")) {
             bodyPayload.chat_template_kwargs = {
               enable_thinking: true
             };
           }
 
-          const nvRes = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+          let invokeUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+          if (textModel.includes("paligemma")) {
+            invokeUrl = "https://ai.api.nvidia.com/v1/vlm/google/paligemma";
+          }
+
+          const nvRes = await fetch(invokeUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -1073,8 +1129,10 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
           const data: any = await nvRes.json();
           const choiceMsg = data.choices?.[0]?.message;
           responseText = choiceMsg?.content || "";
-          if (choiceMsg?.reasoning_content) {
-            responseText = `> **Thinking Process:**\n> ${choiceMsg.reasoning_content.split('\n').join('\n> ')}\n\n${responseText}`;
+          
+          const reasoningText = choiceMsg?.reasoning || choiceMsg?.reasoning_content;
+          if (reasoningText) {
+            responseText = `> **Thinking Process:**\n> ${reasoningText.split('\n').join('\n> ')}\n\n${responseText}`;
           }
         } catch (apiErr: any) {
           console.error("[NextGenAi] NVIDIA generation exception:", apiErr.message || apiErr);
@@ -1309,12 +1367,17 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
       let response;
       let lastError: any = null;
       let modelsToTry = [
-        "gemini-3.1-flash-lite",
-        "gemini-3.5-flash",
-        "gemini-flash-latest"
+        "gemini-2.5-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
       ];
       if (textModel && typeof textModel === "string" && textModel.trim()) {
-        const choice = textModel.trim();
+        let choice = textModel.trim();
+        if (choice === "core-inference") choice = "gemini-1.5-pro";
+        else if (choice === "gpt-5.5") choice = "gemini-2.5-flash";
+        else if (choice.includes("3.5") || choice.includes("3.1") || choice.includes("latest") || choice.includes("lite")) choice = "gemini-2.5-flash";
+        else if (choice.includes("pro") || choice.includes("31b")) choice = "gemini-1.5-pro";
+        
         modelsToTry = [choice, ...modelsToTry.filter(m => m !== choice)];
       }
 

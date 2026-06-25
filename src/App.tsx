@@ -30,11 +30,20 @@ import {
   Lock,
   Shield,
   AlertCircle,
-  Menu
+  Menu,
+  Camera,
+  FileText,
+  Telescope,
+  GraduationCap,
+  ArrowUp,
+  Bot,
+  Users
 } from "lucide-react";
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signOut, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
@@ -45,8 +54,12 @@ import {
   googleProvider, 
   facebookProvider, 
   appleProvider,
+  githubProvider,
   db
 } from "./firebase";
+
+import { marked } from "marked";
+import deepSeekLogo from './assets/images/deepseek_logo.webp';
 
 // List of pre-authorized, secure recovery bypass keys that can grant emergency lock clearance
 const ALLOWED_BYPASS_PINS = new Set(
@@ -307,6 +320,24 @@ const TEXT_MODELS: TextModelConfig[] = [
     params: "NVIDIA-accelerated"
   },
   {
+    id: "google/gemma-3n-e4b-it",
+    name: "Gemma 3N E4B IT",
+    avatar: "✨",
+    desc: "Open reasoning model powered by NVIDIA",
+    series: "Google Gemma Series",
+    badge: "E4B Open",
+    params: "NVIDIA-accelerated"
+  },
+  {
+    id: "google/paligemma",
+    name: "PaliGemma Vision",
+    avatar: "👁️",
+    desc: "Open vision-language model powered by NVIDIA",
+    series: "Google Gemma Series",
+    badge: "Vision Open",
+    params: "NVIDIA-accelerated"
+  },
+  {
     id: "google/diffusiongemma-26b-a4b-it",
     name: "DiffusionGemma 26B",
     avatar: "🎨",
@@ -314,6 +345,15 @@ const TEXT_MODELS: TextModelConfig[] = [
     series: "Google Gemma Series",
     badge: "Creative",
     params: "Imagination Engine"
+  },
+  {
+    id: "deepseek-ai/deepseek-v4",
+    name: "DeepSeek V4",
+    avatar: "🟢",
+    desc: "Advanced reasoning & thinking model powered by NVIDIA",
+    series: "DeepSeek Intelligence",
+    badge: "Stable",
+    params: "Fast reasoning"
   },
   {
     id: "deepseek-ai/deepseek-v4-pro",
@@ -325,6 +365,15 @@ const TEXT_MODELS: TextModelConfig[] = [
     params: "Ultra-precise reasoning"
   },
   {
+    id: "deepseek-ai/deepseek-v4-flash",
+    name: "DeepSeek V4 Flash",
+    avatar: "🟢",
+    desc: "Fast reasoning model powered by NVIDIA",
+    series: "DeepSeek Intelligence",
+    badge: "Flash State",
+    params: "NVIDIA-accelerated"
+  },
+  {
     id: "openai/gpt-oss-120b",
     name: "GPT OSS 120B",
     avatar: "🧠",
@@ -332,6 +381,24 @@ const TEXT_MODELS: TextModelConfig[] = [
     series: "OpenAI Foundation",
     badge: "Deep Thinker",
     params: "120B Parameters"
+  },
+  {
+    id: "openai/gpt-oss-20b",
+    name: "GPT OSS 20B",
+    avatar: "🧠",
+    desc: "Large reasoning and thinking model powered by NVIDIA",
+    series: "OpenAI Foundation",
+    badge: "Fast Thinker",
+    params: "20B Parameters"
+  },
+  {
+    id: "openai/gpt-oss-safeguard-20b",
+    name: "GPT OSS Safeguard 20B",
+    avatar: "🛡️",
+    desc: "Large reasoning and thinking model with advanced safeguards powered by NVIDIA",
+    series: "OpenAI Foundation",
+    badge: "Secure Thinker",
+    params: "20B Parameters"
   },
   {
     id: "poolside/laguna-m.1:free",
@@ -395,6 +462,24 @@ const TEXT_MODELS: TextModelConfig[] = [
     series: "Alibaba Qwen Series",
     badge: "397B MoE",
     params: "NVIDIA Pro MoE"
+  },
+  {
+    id: "qwen/qwen3-next-80b-a3b-instruct",
+    name: "Qwen 3 Next 80B",
+    avatar: "👑",
+    desc: "Next-gen instructional model powered by NVIDIA",
+    series: "Alibaba Qwen Series",
+    badge: "80B Instruct",
+    params: "NVIDIA-accelerated"
+  },
+  {
+    id: "qwen/qwen3.5-122b-a10b",
+    name: "Qwen 3.5 122B",
+    avatar: "👑",
+    desc: "Large Chinese-English mixture-of-experts model powered by NVIDIA",
+    series: "Alibaba Qwen Series",
+    badge: "122B MoE",
+    params: "NVIDIA-accelerated"
   },
   {
     id: "z-ai/glm-5.1",
@@ -515,6 +600,11 @@ export default function App() {
   const [isAvatarDropdownOpen, setIsAvatarDropdownOpen] = useState(false);
   const [showEngineSelector, setShowEngineSelector] = useState(false);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+  const [isGeminiMenuOpen, setIsGeminiMenuOpen] = useState(false);
+  const [isGptMenuOpen, setIsGptMenuOpen] = useState(false);
+  const [isOpenaiMenuOpen, setIsOpenaiMenuOpen] = useState(false);
+  const [isDeepseekMenuOpen, setIsDeepseekMenuOpen] = useState(false);
+  const [isAllMenuOpen, setIsAllMenuOpen] = useState(false);
   const [showModelModal, setShowModelModal] = useState(false);
   const [showDriveModal, setShowDriveModal] = useState(false);
   const [showPdfcoModal, setShowPdfcoModal] = useState(false);
@@ -826,6 +916,11 @@ export default function App() {
   const modelDropdownRef = useRef<HTMLDivElement>(null);
   const avatarDropdownRef = useRef<HTMLDivElement>(null);
   const plusMenuRef = useRef<HTMLDivElement>(null);
+  const geminiMenuRef = useRef<HTMLDivElement>(null);
+  const gptMenuRef = useRef<HTMLDivElement>(null);
+  const openaiMenuRef = useRef<HTMLDivElement>(null);
+  const deepseekMenuRef = useRef<HTMLDivElement>(null);
+  const allMenuRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const headerToolsRef = useRef<HTMLDivElement>(null);
 
@@ -879,6 +974,24 @@ export default function App() {
         loadCredentialsFromFirestore(currentUser.uid);
       }
     });
+    
+    // 3. Handle redirect result
+    getRedirectResult(auth).then((result) => {
+      if (result) {
+        console.log("Redirect sign-in successful", result.user);
+        setShowAuthModal(false);
+      }
+    }).catch((error) => {
+      console.error("Redirect sign-in error:", error);
+      if (error.code === "auth/unauthorized-domain") {
+        setAuthError("This domain is not authorized for OAuth operations. Please add it in the Firebase Console.");
+        setShowAuthModal(true);
+      } else {
+        setAuthError(error.message);
+        setShowAuthModal(true);
+      }
+    });
+
     return () => unsubscribe();
   }, []);
 
@@ -895,6 +1008,21 @@ export default function App() {
       }
       if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
         setIsPlusMenuOpen(false);
+      }
+      if (gptMenuRef.current && !gptMenuRef.current.contains(event.target as Node)) {
+        setIsGptMenuOpen(false);
+      }
+      if (openaiMenuRef.current && !openaiMenuRef.current.contains(event.target as Node)) {
+        setIsOpenaiMenuOpen(false);
+      }
+      if (geminiMenuRef.current && !geminiMenuRef.current.contains(event.target as Node)) {
+        setIsGeminiMenuOpen(false);
+      }
+      if (deepseekMenuRef.current && !deepseekMenuRef.current.contains(event.target as Node)) {
+        setIsDeepseekMenuOpen(false);
+      }
+      if (allMenuRef.current && !allMenuRef.current.contains(event.target as Node)) {
+        setIsAllMenuOpen(false);
       }
       if (headerToolsRef.current && !headerToolsRef.current.contains(event.target as Node)) {
         setIsHeaderToolsOpen(false);
@@ -955,7 +1083,11 @@ export default function App() {
       }, 1000);
     } catch (err: any) {
       console.error(err);
-      if (err.code === "auth/operation-not-allowed") {
+      if (err.code === "auth/popup-closed-by-user") {
+        setAuthError("Popup closed. If it closed instantly, open the app in a new tab.");
+      } else if (err.code === "auth/popup-blocked") {
+        setAuthError("Popup blocked. Please open the app in a new tab.");
+      } else if (err.code === "auth/operation-not-allowed") {
         setAuthError("Google Sign-In is not enabled yet. Go to your Firebase Console > Authentication > Sign-in method, edit Google provider, and confirm saving.");
       } else {
         setAuthError(err.message || "An error occurred signing in with Google.");
@@ -977,10 +1109,40 @@ export default function App() {
       }, 1000);
     } catch (err: any) {
       console.error(err);
-      if (err.code === "auth/operation-not-allowed" || err.code === "auth/configuration-not-found" || err.code === "auth/unauthorized-domain") {
+      if (err.code === "auth/popup-closed-by-user") {
+        setAuthError("Popup closed. If it closed instantly, open the app in a new tab.");
+      } else if (err.code === "auth/popup-blocked") {
+        setAuthError("Popup blocked. Please open the app in a new tab.");
+      } else if (err.code === "auth/operation-not-allowed" || err.code === "auth/configuration-not-found" || err.code === "auth/unauthorized-domain") {
         setAuthError("Facebook sign-in provider requires manual activation in the Firebase console. Go to Authentication > Sign-in method, select Facebook, and enter your FB App Developer settings.");
       } else {
         setAuthError(err.message || "An error occurred signing in with Facebook.");
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      await signInWithPopup(auth, githubProvider);
+      setAuthSuccessMessage("Successfully logged in with GitHub!");
+      setTimeout(() => {
+        setShowAuthModal(false);
+        setAuthSuccessMessage(null);
+      }, 1000);
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === "auth/popup-closed-by-user") {
+        setAuthError("Popup closed. If it closed instantly, open the app in a new tab.");
+      } else if (err.code === "auth/popup-blocked") {
+        setAuthError("Popup blocked. Please open the app in a new tab.");
+      } else if (err.code === "auth/operation-not-allowed" || err.code === "auth/configuration-not-found" || err.code === "auth/unauthorized-domain") {
+        setAuthError("GitHub sign-in provider requires manual activation in the Firebase console. Go to Authentication > Sign-in method, select GitHub, and enter your GitHub App Developer settings.");
+      } else {
+        setAuthError(err.message || "An error occurred signing in with GitHub.");
       }
     } finally {
       setAuthLoading(false);
@@ -999,7 +1161,11 @@ export default function App() {
       }, 1000);
     } catch (err: any) {
       console.error(err);
-      if (err.code === "auth/operation-not-allowed" || err.code === "auth/configuration-not-found" || err.code === "auth/unauthorized-domain") {
+      if (err.code === "auth/popup-closed-by-user") {
+        setAuthError("Popup closed. If it closed instantly, open the app in a new tab.");
+      } else if (err.code === "auth/popup-blocked") {
+        setAuthError("Popup blocked. Please open the app in a new tab.");
+      } else if (err.code === "auth/operation-not-allowed" || err.code === "auth/configuration-not-found" || err.code === "auth/unauthorized-domain") {
         setAuthError("Apple authentication requires Apple Developer setup. Open Firebase Console > Authentication > Sign-in method, select Apple, and enter Apple Credentials.");
       } else {
         setAuthError(err.message || "An error occurred signing in with Apple.");
@@ -1067,7 +1233,6 @@ export default function App() {
 
   // Loading and scrolling references
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [markedLoaded, setMarkedLoaded] = useState(false);
   const [searchStatusText, setSearchStatusText] = useState("");
 
   // Copy success animation trigger
@@ -1075,13 +1240,6 @@ export default function App() {
 
   // --- INITIAL COMPILER & MARKED SYSTEM INCLUSION ---
   useEffect(() => {
-    // Dynamic markdown parsing system loader (CDN marked.js)
-    const markedScript = document.createElement("script");
-    markedScript.src = "https://cdn.jsdelivr.net/npm/marked/marked.min.js";
-    markedScript.async = true;
-    markedScript.onload = () => setMarkedLoaded(true);
-    document.head.appendChild(markedScript);
-
     // Dark preference listener
     if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
       setTheme("light");
@@ -1163,6 +1321,22 @@ export default function App() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isGenerating, searchStatusText]);
+
+  useEffect(() => {
+    const updateUrlOnAction = () => {
+      if (window.location.pathname !== '/NextGenAi-hybirde') {
+        window.history.pushState(null, '', '/NextGenAi-hybirde');
+      }
+    };
+    
+    document.addEventListener('click', updateUrlOnAction, { once: true });
+    document.addEventListener('keydown', updateUrlOnAction, { once: true });
+    
+    return () => {
+      document.removeEventListener('click', updateUrlOnAction);
+      document.removeEventListener('keydown', updateUrlOnAction);
+    };
+  }, []);
 
   // --- ACTIONS CONTROLLERS ---
 
@@ -2006,12 +2180,10 @@ export default function App() {
 
   // --- ADVANCED TYPESET COMPILER (MARKED FALLBACK) ---
   const formatMarkdownToHTML = (text: string) => {
-    const isMarkedReady = markedLoaded && (window as any).marked;
-    if (isMarkedReady) {
-      try {
-        return { __html: (window as any).marked.parse(text) };
-      } catch (_) {}
-    }
+    try {
+      // @ts-ignore
+      return { __html: marked.parse(text) };
+    } catch (_) {}
 
     // Basic regex safe layout compiler fallback
     let escaped = text
@@ -2042,8 +2214,244 @@ export default function App() {
 
   const renderInputForm = () => {
     return (
-      <div className="w-full space-y-2.5">
-        <form onSubmit={handleSendMessage} className="relative flex items-center w-full">
+      <div className="w-full">
+        {/* Top Model Selector Row */}
+        <div className="flex items-center justify-center gap-2 mb-3 flex-wrap pb-1 w-full max-w-full">
+          <div className="relative" ref={gptMenuRef}>
+            <button 
+              type="button" 
+              onClick={() => setIsGptMenuOpen(!isGptMenuOpen)}
+              className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${theme === 'dark' ? 'border-zinc-700 bg-[#1e1e20] text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50'}`}
+            >
+               <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+               </svg>
+               <span className="font-semibold">{activeTextModel === 'google/gemma-4-31b-it' ? 'Gemma 4 31B' : activeTextModel === 'google/gemma-3n-e4b-it' ? 'Gemma 3N E4B' : activeTextModel === 'google/paligemma' ? 'PaliGemma Vision' : activeTextModel === 'google/diffusiongemma-26b-a4b-it' ? 'DiffusionGemma 26B' : 'Google AI'}</span>
+               <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+            </button>
+            {isGptMenuOpen && (
+              <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 p-2 rounded-2xl border shadow-xl animate-fade-in z-[100] ${
+                theme === "dark"
+                  ? "bg-[#1e1f22] border-[#2c2d30] text-zinc-100 shadow-black/90"
+                  : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
+              }`}>
+                <div className="flex flex-col space-y-1">
+                  <button type="button" onClick={() => { setIsGptMenuOpen(false); changeTextModel('google/gemma-4-31b-it'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Gemma 4 31B IT
+                  </button>
+                  <button type="button" onClick={() => { setIsGptMenuOpen(false); changeTextModel('google/gemma-3n-e4b-it'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Gemma 3N E4B IT
+                  </button>
+                  <button type="button" onClick={() => { setIsGptMenuOpen(false); changeTextModel('google/paligemma'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    PaliGemma Vision
+                  </button>
+                  <button type="button" onClick={() => { setIsGptMenuOpen(false); changeTextModel('google/diffusiongemma-26b-a4b-it'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    DiffusionGemma 26B
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative" ref={openaiMenuRef}>
+            <button 
+              type="button" 
+              onClick={() => setIsOpenaiMenuOpen(!isOpenaiMenuOpen)}
+              className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${theme === 'dark' ? 'border-zinc-700 bg-[#1e1e20] text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50'}`}
+            >
+               <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                 <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
+               </svg>
+               <span className="font-semibold">{activeTextModel === 'openai/gpt-oss-120b' ? 'GPT OSS 120B' : activeTextModel === 'openai/gpt-oss-safeguard-20b' ? 'GPT OSS Safeguard 20B' : activeTextModel === 'openai/gpt-oss-20b' ? 'GPT OSS 20B' : 'GPT-5.5'}</span>
+               <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+            </button>
+            {isOpenaiMenuOpen && (
+              <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 p-2 rounded-2xl border shadow-xl animate-fade-in z-[100] ${
+                theme === "dark"
+                  ? "bg-[#1e1f22] border-[#2c2d30] text-zinc-100 shadow-black/90"
+                  : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
+              }`}>
+                <div className="flex flex-col space-y-1">
+                  <button type="button" onClick={() => { setIsOpenaiMenuOpen(false); changeTextModel('gpt-5.5'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
+                    </svg>
+                    GPT-5.5
+                  </button>
+                  <button type="button" onClick={() => { setIsOpenaiMenuOpen(false); changeTextModel('openai/gpt-oss-120b'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
+                    </svg>
+                    GPT OSS 120B
+                  </button>
+                  <button type="button" onClick={() => { setIsOpenaiMenuOpen(false); changeTextModel('openai/gpt-oss-20b'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
+                    </svg>
+                    GPT OSS 20B
+                  </button>
+                  <button type="button" onClick={() => { setIsOpenaiMenuOpen(false); changeTextModel('openai/gpt-oss-safeguard-20b'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
+                    </svg>
+                    GPT OSS Safeguard 20B
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative" ref={geminiMenuRef}>
+            <button 
+              type="button" 
+              onClick={() => setIsGeminiMenuOpen(!isGeminiMenuOpen)}
+              className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${theme === 'dark' ? 'border-zinc-700 bg-[#1e1e20] text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50'}`}
+            >
+               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                 <path d="M12.0003 24C12.3878 17.5855 17.4897 12.4339 24.0042 12C17.4897 11.5661 12.3878 6.4145 12.0003 0C11.6128 6.4145 6.51086 11.5661 0.00415039 12C6.51086 12.4339 11.6128 17.5855 12.0003 24Z" fill="url(#gemini_grad)"/>
+                 <defs>
+                   <linearGradient id="gemini_grad" x1="0.00415039" y1="12" x2="24.0042" y2="12" gradientUnits="userSpaceOnUse">
+                     <stop stopColor="#4285F4"/>
+                     <stop offset="0.5" stopColor="#9B72CB"/>
+                     <stop offset="1" stopColor="#D96570"/>
+                   </linearGradient>
+                 </defs>
+               </svg>
+               <span>{
+                 activeTextModel === 'core-inference' ? 'Core Inference' :
+                 activeTextModel === 'gemini-3.5-flash' ? 'Gemini 3.5' :
+                 activeTextModel === 'gemini-3.1-flash-lite' ? 'Gemini 3.1 Flash Latest' :
+                 'Gemini 3.5 Fl...'
+               }</span>
+               <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+            </button>
+            {isGeminiMenuOpen && (
+              <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 p-2 rounded-2xl border shadow-xl animate-fade-in z-[100] ${
+                theme === "dark"
+                  ? "bg-[#1e1f22] border-[#2c2d30] text-zinc-100 shadow-black/90"
+                  : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
+              }`}>
+                <div className="flex flex-col space-y-1">
+                  <button type="button" onClick={() => { setIsGeminiMenuOpen(false); changeTextModel('core-inference'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.0003 24C12.3878 17.5855 17.4897 12.4339 24.0042 12C17.4897 11.5661 12.3878 6.4145 12.0003 0C11.6128 6.4145 6.51086 11.5661 0.00415039 12C6.51086 12.4339 11.6128 17.5855 12.0003 24Z" fill="url(#gemini_grad)"/>
+                      <defs>
+                        <linearGradient id="gemini_grad" x1="0.00415039" y1="12" x2="24.0042" y2="12" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#4285F4"/>
+                          <stop offset="0.5" stopColor="#9B72CB"/>
+                          <stop offset="1" stopColor="#D96570"/>
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    Core Inference
+                  </button>
+                  <button type="button" onClick={() => { setIsGeminiMenuOpen(false); changeTextModel('gemini-3.5-flash'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.0003 24C12.3878 17.5855 17.4897 12.4339 24.0042 12C17.4897 11.5661 12.3878 6.4145 12.0003 0C11.6128 6.4145 6.51086 11.5661 0.00415039 12C6.51086 12.4339 11.6128 17.5855 12.0003 24Z" fill="url(#gemini_grad)"/>
+                    </svg>
+                    Gemini 3.5
+                  </button>
+                  <button type="button" onClick={() => { setIsGeminiMenuOpen(false); changeTextModel('gemini-3.1-flash-lite'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.0003 24C12.3878 17.5855 17.4897 12.4339 24.0042 12C17.4897 11.5661 12.3878 6.4145 12.0003 0C11.6128 6.4145 6.51086 11.5661 0.00415039 12C6.51086 12.4339 11.6128 17.5855 12.0003 24Z" fill="url(#gemini_grad)"/>
+                    </svg>
+                    Gemini 3.1 Flash Latest
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative" ref={deepseekMenuRef}>
+            <button 
+              type="button" 
+              onClick={() => setIsDeepseekMenuOpen(!isDeepseekMenuOpen)}
+              className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${theme === 'dark' ? 'border-zinc-700 bg-[#1e1e20] text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50'}`}
+            >
+               <img src={deepSeekLogo} alt="DeepSeek" className="w-4 h-4 object-contain rounded-sm" />
+               <span className="font-semibold">{activeTextModel === 'deepseek-ai/deepseek-v4-pro' ? 'DeepSeek V4 Pro' : activeTextModel === 'deepseek-ai/deepseek-v4-flash' ? 'DeepSeek V4 Flash' : 'DeepSeek V4'}</span>
+               <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+            </button>
+            {isDeepseekMenuOpen && (
+              <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 p-2 rounded-2xl border shadow-xl animate-fade-in z-[100] ${
+                theme === "dark"
+                  ? "bg-[#1e1f22] border-[#2c2d30] text-zinc-100 shadow-black/90"
+                  : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
+              }`}>
+                <div className="flex flex-col space-y-1">
+                  <button type="button" onClick={() => { setIsDeepseekMenuOpen(false); changeTextModel('deepseek-ai/deepseek-v4'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <img src={deepSeekLogo} alt="DeepSeek" className="w-4 h-4 object-contain rounded-sm" />
+                    DeepSeek V4
+                  </button>
+                  <button type="button" onClick={() => { setIsDeepseekMenuOpen(false); changeTextModel('deepseek-ai/deepseek-v4-pro'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <img src={deepSeekLogo} alt="DeepSeek" className="w-4 h-4 object-contain rounded-sm" />
+                    DeepSeek V4 Pro
+                  </button>
+                  <button type="button" onClick={() => { setIsDeepseekMenuOpen(false); changeTextModel('deepseek-ai/deepseek-v4-flash'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <img src={deepSeekLogo} alt="DeepSeek" className="w-4 h-4 object-contain rounded-sm" />
+                    DeepSeek V4 Flash
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative" ref={allMenuRef}>
+            <button 
+              type="button" 
+              onClick={() => setIsAllMenuOpen(!isAllMenuOpen)}
+              className={`flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${theme === 'dark' ? 'border-zinc-700 bg-[#1e1e20] text-zinc-200 hover:bg-zinc-800' : 'border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50'}`}
+            >
+               <span>All</span>
+               <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+            </button>
+            {isAllMenuOpen && (
+              <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 p-2 rounded-2xl border shadow-xl animate-fade-in z-[100] max-h-96 overflow-y-auto ${
+                theme === "dark"
+                  ? "bg-[#1e1f22] border-[#2c2d30] text-zinc-100 shadow-black/90"
+                  : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
+              }`}>
+                <div className="flex flex-col space-y-1">
+                  {TEXT_MODELS.filter(m => !['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'google/gemma-4-31b-it', 'google/gemma-3n-e4b-it', 'google/paligemma', 'google/diffusiongemma-26b-a4b-it', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'openai/gpt-oss-safeguard-20b', 'deepseek-ai/deepseek-v4', 'deepseek-ai/deepseek-v4-pro', 'deepseek-ai/deepseek-v4-flash'].includes(m.id)).map(m => (
+                    <button key={m.id} type="button" onClick={() => { setIsAllMenuOpen(false); changeTextModel(m.id); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                      <span className="text-base">{m.avatar}</span>
+                      <span className="truncate">{m.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleSendMessage} className={`relative w-full flex flex-col rounded-3xl border transition-all duration-300 ${
+          theme === "dark"
+            ? "bg-[#1e1e20] border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.15)] focus-within:border-purple-400"
+            : "bg-white border-purple-300 shadow-[0_0_15px_rgba(216,180,254,0.3)] focus-within:border-purple-400"
+        }`}>
           <input
             type="file"
             accept="image/png, image/jpeg, image/webp"
@@ -2052,240 +2460,283 @@ export default function App() {
             className="hidden"
           />
 
-          <div className={`w-full flex items-center pl-3.5 pr-2.5 py-2.5 rounded-[32px] border transition-all duration-300 ${
-            theme === "dark"
-              ? "bg-[#1e1e20] border-[#2d2e30] focus-within:border-zinc-600 focus-within:ring-2 focus-within:ring-zinc-800/35"
-              : "bg-white border-zinc-200 shadow-sm focus-within:border-zinc-300 focus-within:ring-2 focus-within:ring-zinc-200/40"
-          }`}>
-          
-          {/* Gemini-style Plus Button and Dropdown Popover */}
-          <div className="relative" ref={plusMenuRef}>
-            <button
-              type="button"
-              onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-              className={`w-10 h-10 rounded-full transition-all duration-200 flex items-center justify-center relative ${
-                theme === "dark"
-                  ? "bg-[#2d2f31] hover:bg-[#3d3f43]"
-                  : "bg-[#f0f4f9] hover:bg-[#e3e8f0]"
-              }`}
-              title="Tools and Models Menu"
-            >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.08H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.92l3.66-2.83z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.08l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38z"/>
-                </svg>
-            </button>
-
-            {/* Gemini style Dropdown Popup Overlay with direct AI model brain selection */}
-            {isPlusMenuOpen && (
-              <div className={`absolute bottom-full left-0 mb-3 w-72 p-2.5 rounded-2.5xl border shadow-2xl animate-fade-in ${
-                theme === "dark"
-                  ? "bg-[#1e1f22] border-[#2c2d30] text-zinc-100 shadow-black/95"
-                  : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-350/50"
-              }`}>
-                <div className="space-y-3 text-[13px] font-sans">
-                  
-                  {/* Section 2: Attach Local Files */}
-                  <div>
-                    <div className="px-2 pb-1.5 pt-1 border-b border-zinc-200/10 dark:border-zinc-800/20 flex items-center justify-between">
-                      <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🔗 File Attachment</span>
-                      <span className="text-[9px] font-mono opacity-40">multimodal</span>
-                    </div>
-                    <div className="space-y-1 mt-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsPlusMenuOpen(false);
-                          fileInputRef.current?.click();
-                        }}
-                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                          theme === "dark" 
-                            ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                            : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                        }`}
-                      >
-                        <span className="text-lg">🔗</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs truncate leading-tight">Attach Image / Graphic</p>
-                          <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Upload JPEG, PNG or WEBP (Max 5MB)</p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Section 3: Flights Integration */}
-                  <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
-                    <div className="px-2 pb-1.5 flex items-center justify-between">
-                      <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">✈️ Flight Search</span>
-                      <span className="text-[9px] font-mono opacity-40">serpapi</span>
-                    </div>
-                    <div className="space-y-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsPlusMenuOpen(false);
-                          setShowFlightsModal(true);
-                        }}
-                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                          theme === "dark" 
-                            ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                            : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                        }`}
-                      >
-                        <span className="text-lg">✈️</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs truncate leading-tight">Google Flights Search</p>
-                          <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Find live flight routing options</p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Section 4: Shopping Integration */}
-                  <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
-                    <div className="px-2 pb-1.5 flex items-center justify-between">
-                      <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🛒 Shopping</span>
-                      <span className="text-[9px] font-mono opacity-40">serper</span>
-                    </div>
-                    <div className="space-y-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsPlusMenuOpen(false);
-                          setShowShoppingModal(true);
-                        }}
-                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                          theme === "dark" 
-                            ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                            : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                        }`}
-                      >
-                        <span className="text-lg">🛒</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs truncate leading-tight">Google Shopping Search</p>
-                          <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Compare product prices & specs</p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Section 5: Images Integration */}
-                  <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
-                    <div className="px-2 pb-1.5 flex items-center justify-between">
-                      <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🖼️ Images</span>
-                      <span className="text-[9px] font-mono opacity-40">serper</span>
-                    </div>
-                    <div className="space-y-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsPlusMenuOpen(false);
-                          setShowImagesModal(true);
-                        }}
-                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                          theme === "dark" 
-                            ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                            : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                        }`}
-                      >
-                        <span className="text-lg">🖼️</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs truncate leading-tight">Google Images Search</p>
-                          <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Search millions of assets globally</p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Section 6: Walmart Integration */}
-                  <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
-                    <div className="px-2 pb-1.5 flex items-center justify-between">
-                      <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🏬 Walmart</span>
-                      <span className="text-[9px] font-mono opacity-40">serpapi</span>
-                    </div>
-                    <div className="space-y-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsPlusMenuOpen(false);
-                          setShowWalmartModal(true);
-                        }}
-                        className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                          theme === "dark" 
-                            ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                            : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                        }`}
-                      >
-                        <span className="text-lg">🏬</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-xs truncate leading-tight">Walmart Product Search</p>
-                          <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Search products & offers via SerpApi</p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            )}
+          {/* Top Bar with Tags */}
+          <div className="flex items-center justify-between px-4 pt-3 pb-1 flex-wrap gap-2">
+            <div className="flex items-center gap-2 text-xs">
+              <span className={`font-semibold ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-600'}`}>GPT-5.5:</span>
+              <span className="bg-orange-500 text-white px-2 py-0.5 rounded-md font-medium text-[10px] tracking-wide">New</span>
+              <span className={`px-2 py-0.5 rounded-md border text-[10px] ${theme === 'dark' ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>OpenAI</span>
+              <span className={`px-2 py-0.5 rounded-md border text-[10px] ${theme === 'dark' ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>Image and Video Recognition</span>
+              <span className={`px-2 py-0.5 rounded-md border text-[10px] ${theme === 'dark' ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>Mathematical Logic</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="font-semibold text-pink-600 dark:text-pink-400">Up to <span className="font-bold">50% OFF</span></span>
+              <button type="button" className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-950 px-3 py-1 rounded-lg font-bold flex items-center gap-1 shadow-sm hover:opacity-90 transition-opacity">
+                <span>🚀</span> Upgrade
+              </button>
+            </div>
           </div>
 
           {/* Main text message writer box */}
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              const isCtrlEnter = e.key === "Enter" && (e.ctrlKey || e.metaKey);
-              const isPlainEnter = e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey;
-              if (isPlainEnter || isCtrlEnter) {
-                e.preventDefault();
-                handleSendMessage();
+          <div className="px-4 py-2">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                const isCtrlEnter = e.key === "Enter" && (e.ctrlKey || e.metaKey);
+                const isPlainEnter = e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey;
+                if (isPlainEnter || isCtrlEnter) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder={
+                isImageGenMode
+                  ? "Describe the image you want to generate in detail..."
+                  : imageMode 
+                    ? "Describe your query or ask questions about the attached graphic/document..." 
+                    : "Select a model and start writing, coding, or exploring..."
               }
-            }}
-            placeholder={
-              isImageGenMode
-                ? "Describe the image you want to generate in detail (e.g., 'A futuristic castle' or 'minimalist lotus flower')...."
-                : imageMode 
-                  ? "Describe your query or ask questions about the attached graphic/document..." 
-                  : "Ask anything..."
-            }
-            rows={1}
-            className="flex-1 bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm py-2 px-3 resize-none max-h-32 placeholder-zinc-500"
-          />
-
-          {/* Right panel items (Mic dictation and trigger arrow) */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={toggleMicrophone}
-              className={`p-2.5 rounded-full transition flex items-center justify-center ${
-                isMicListening 
-                  ? "bg-red-600 text-white shadow-lg scale-105" 
-                  : (theme === "dark" ? "text-zinc-400 hover:text-white hover:bg-zinc-800" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100")
-              }`}
-              title={isMicListening ? "Mute automatic transcription" : "Start Voice dictation transcription"}
-            >
-              {isMicListening ? <MicOff className="w-5 h-5 animate-pulse" /> : <Mic className="w-5 h-5" />}
-            </button>
-
-            <button
-              type="submit"
-              disabled={!input.trim() && !attachedImage}
-              className={`p-2.5 rounded-full transition-all flex items-center justify-center ${
-                (!input.trim() && !attachedImage) 
-                  ? "text-zinc-600 bg-transparent cursor-not-allowed opacity-50" 
-                  : (isImageGenMode || imageMode ? "bg-purple-600 text-white hover:bg-purple-500 hover:shadow-lg" : "bg-blue-600 text-white hover:bg-blue-500 hover:shadow-lg")
-              }`}
-            >
-              <Send className="w-4 h-4 text-white stroke-[2.2]" />
-            </button>
+              rows={1}
+              className="w-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-sm resize-none max-h-32 placeholder-zinc-400 dark:placeholder-zinc-500"
+            />
           </div>
 
-        </div>
-      </form>
+          {/* Bottom Toolbar */}
+          <div className="flex items-center justify-between px-3 pb-3 pt-1">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              
+              {/* Plus Button and Dropdown Popover */}
+              <div className="relative" ref={plusMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
+                  className={`p-2 rounded-full transition-all flex items-center justify-center ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}
+                  title="Tools and Models Menu"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+
+                {/* Gemini style Dropdown Popup Overlay */}
+                {isPlusMenuOpen && (
+                  <div className={`absolute bottom-full left-0 mb-3 w-72 p-2.5 rounded-2.5xl border shadow-2xl animate-fade-in z-50 ${
+                    theme === "dark"
+                      ? "bg-[#1e1f22] border-[#2c2d30] text-zinc-100 shadow-black/95"
+                      : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-350/50"
+                  }`}>
+                    <div className="space-y-3 text-[13px] font-sans">
+                      
+                      {/* Section 2: Attach Local Files */}
+                      <div>
+                        <div className="px-2 pb-1.5 pt-1 border-b border-zinc-200/10 dark:border-zinc-800/20 flex items-center justify-between">
+                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🔗 File Attachment</span>
+                          <span className="text-[9px] font-mono opacity-40">multimodal</span>
+                        </div>
+                        <div className="space-y-1 mt-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsPlusMenuOpen(false);
+                              fileInputRef.current?.click();
+                            }}
+                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                              theme === "dark" 
+                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
+                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
+                            }`}
+                          >
+                            <span className="text-lg">🔗</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-xs truncate leading-tight">Attach Image / Graphic</p>
+                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Upload JPEG, PNG or WEBP (Max 5MB)</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Section 3: Flights Integration */}
+                      <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
+                        <div className="px-2 pb-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">✈️ Flight Search</span>
+                          <span className="text-[9px] font-mono opacity-40">serpapi</span>
+                        </div>
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsPlusMenuOpen(false);
+                              setShowFlightsModal(true);
+                            }}
+                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                              theme === "dark" 
+                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
+                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
+                            }`}
+                          >
+                            <span className="text-lg">✈️</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-xs truncate leading-tight">Google Flights Search</p>
+                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Find live flight routing options</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Section 4: Shopping Integration */}
+                      <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
+                        <div className="px-2 pb-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🛒 Shopping</span>
+                          <span className="text-[9px] font-mono opacity-40">serper</span>
+                        </div>
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsPlusMenuOpen(false);
+                              setShowShoppingModal(true);
+                            }}
+                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                              theme === "dark" 
+                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
+                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
+                            }`}
+                          >
+                            <span className="text-lg">🛒</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-xs truncate leading-tight">Google Shopping Search</p>
+                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Compare product prices & specs</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Section 5: Images Integration */}
+                      <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
+                        <div className="px-2 pb-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🖼️ Images</span>
+                          <span className="text-[9px] font-mono opacity-40">serper</span>
+                        </div>
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsPlusMenuOpen(false);
+                              setShowImagesModal(true);
+                            }}
+                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                              theme === "dark" 
+                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
+                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
+                            }`}
+                          >
+                            <span className="text-lg">🖼️</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-xs truncate leading-tight">Google Images Search</p>
+                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Search millions of assets globally</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Section 6: Walmart Integration */}
+                      <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
+                        <div className="px-2 pb-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🏬 Walmart</span>
+                          <span className="text-[9px] font-mono opacity-40">serpapi</span>
+                        </div>
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsPlusMenuOpen(false);
+                              setShowWalmartModal(true);
+                            }}
+                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+                              theme === "dark" 
+                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
+                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
+                            }`}
+                          >
+                            <span className="text-lg">🏬</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-xs truncate leading-tight">Walmart Product Search</p>
+                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Search products & offers via SerpApi</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Camera Button -> Maps to file input */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-2 rounded-full transition-all flex items-center justify-center ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}
+                title="Attach file or image"
+              >
+                <Camera className="w-5 h-5" />
+              </button>
+
+              {/* Globe Search Button */}
+              <button type="button" onClick={() => showToastAlert("Search module not configured.")} className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-medium ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+                <Globe className="w-4 h-4" />
+                <span>Search</span>
+              </button>
+
+              {/* My Prompts Button */}
+              <button type="button" onClick={() => showToastAlert("My Prompts module not configured.")} className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-medium ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+                <FileText className="w-4 h-4" />
+                <span>My Prompts</span>
+              </button>
+
+              {/* Deep Research Button */}
+              <button type="button" onClick={() => showToastAlert("Deep Research module not configured.")} className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-medium ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+                <Telescope className="w-4 h-4" />
+                <span>Deep Research</span>
+              </button>
+
+              {/* Study Button */}
+              <button type="button" onClick={() => showToastAlert("Study module not configured.")} className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-medium ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+                <GraduationCap className="w-4 h-4" />
+                <span>Study</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <span className={`text-xs font-medium ${theme === 'dark' ? 'text-zinc-500' : 'text-zinc-400'}`}>2/3</span>
+              
+              <button
+                type="button"
+                onClick={toggleMicrophone}
+                className={`p-2 rounded-full transition-all flex items-center justify-center ${
+                  isMicListening 
+                    ? "bg-red-500 text-white animate-pulse" 
+                    : (theme === "dark" ? "text-zinc-400 hover:text-white hover:bg-zinc-800" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100")
+                }`}
+                title="Start Voice dictation transcription"
+              >
+                {isMicListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+
+              <button
+                type="submit"
+                disabled={!input.trim() && !attachedImage}
+                className={`w-8 h-8 rounded-full transition-all flex items-center justify-center ${
+                  (!input.trim() && !attachedImage) 
+                    ? (theme === 'dark' ? 'bg-zinc-700 text-zinc-500' : 'bg-zinc-200 text-white')
+                    : 'bg-zinc-900 text-white dark:bg-zinc-200 dark:text-zinc-900 shadow-md hover:scale-105'
+                }`}
+              >
+                <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     );
   };
@@ -2431,8 +2882,8 @@ export default function App() {
                   <path d="M12 2Q12 12 22 12Q12 12 12 22Q12 12 2 12Q12 12 12 2Z" fill="currentColor" />
                 </svg>
               </div>
-              <span className="font-sans font-semibold text-lg tracking-tight leading-none text-[#131415] dark:text-white">
-                NextGenAi
+              <span className="font-sans font-black text-[19px] tracking-[0.15em] uppercase text-black">
+                NEXTGEN AI
               </span>
             </div>
           )}
@@ -2477,7 +2928,7 @@ export default function App() {
             }`}
             title="Start clear fresh canvas chat"
           >
-            {!isSidebarCollapsed && <span className="animate-fade-in text-black dark:text-zinc-250">New chat</span>}
+            {!isSidebarCollapsed && <span className="animate-fade-in font-bold tracking-[0.2em] uppercase text-[10px] text-zinc-900 dark:text-zinc-100">NEW CHAT</span>}
           </button>
         </div>
 
@@ -2499,10 +2950,10 @@ export default function App() {
               className={`flex items-center justify-between px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 hover:opacity-100 transition-opacity text-amber-500 cursor-pointer select-none`}
             >
               {isSidebarCollapsed ? (
-                <span className="text-sm font-semibold text-center w-full" title="Reasoning LLMs">🧠</span>
+                <span className="text-sm font-semibold text-center w-full" title="REASONING LLMs">🧠</span>
               ) : (
                 <>
-                  <span className="animate-fade-in font-display">🧠 Reasoning LLMs</span>
+                  <span className="animate-fade-in font-display font-black tracking-widest text-[11px]">🧠 REASONING LLMs</span>
                   <span className="text-[9px] text-zinc-400">{isReasoningSectionExpanded ? "▼" : "▲"}</span>
                 </>
               )}
@@ -2556,10 +3007,10 @@ export default function App() {
               className={`flex items-center justify-between px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 hover:opacity-100 transition-opacity text-sky-500 cursor-pointer select-none`}
             >
               {isSidebarCollapsed ? (
-                <span className="text-sm font-semibold text-center w-full" title="Core Inference">⚡</span>
+                <span className="text-sm font-semibold text-center w-full" title="CORE INFERENCE">⚡</span>
               ) : (
                 <>
-                  <span className="animate-fade-in font-display">⚡ Core Inference</span>
+                  <span className="animate-fade-in font-display font-black tracking-widest text-[11px]">⚡ CORE INFERENCE</span>
                   <span className="text-[9px] text-zinc-400">{isCoreSectionExpanded ? "▼" : "▲"}</span>
                 </>
               )}
@@ -2612,191 +3063,27 @@ export default function App() {
             )}
           </div>
 
-          {/* SEARCH & SHOPPING SERVICES */}
-          <div>
-            {!isSidebarCollapsed && (
-              <p className="px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 text-sky-500 animate-fade-in">
-                Search Intelligence
-              </p>
-            )}
-            <div className="space-y-0.5">
-              {[
-                { label: "Google Flights", icon: "✈️", color: "text-blue-500", action: () => setShowFlightsModal(true) },
-                { label: "Google Shopping", icon: "🛒", color: "text-amber-500", action: () => setShowShoppingModal(true) },
-                { label: "Google Images", icon: "🖼️", color: "text-purple-500", action: () => setShowImagesModal(true) },
-                { label: "Walmart Product Search", icon: "🏬", color: "text-sky-500", action: () => setShowWalmartModal(true) },
-              ].map((item, id) => (
-                <button
-                  key={id}
-                  onClick={() => {
-                    item.action();
-                    if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
-                    isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
-                  } ${
-                    theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
-                  }`}
-                  title={item.label}
-                >
-                  <span className="text-base">{item.icon}</span>
-                  {!isSidebarCollapsed && (
-                    <span className="truncate flex-grow animate-fade-in">{item.label}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* DOCUMENTATION SERVICES */}
-          <div>
-            {!isSidebarCollapsed && (
-              <p className="px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 text-emerald-500 animate-fade-in">
-                Documents & Files
-              </p>
-            )}
-            <div className="space-y-0.5">
-              {[
-                { label: "Google Drive Docs", icon: "📂", color: "text-blue-500", action: () => setShowDriveModal(true) },
-                { label: "PDF.co Doc Suite", icon: "📄", color: "text-emerald-500", action: () => setShowPdfcoModal(true) },
-              ].map((item, id) => (
-                <button
-                  key={id}
-                  onClick={() => {
-                    item.action();
-                    if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
-                    isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
-                  } ${
-                    theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
-                  }`}
-                  title={item.label}
-                >
-                  <span className="text-base">{item.icon}</span>
-                  {!isSidebarCollapsed && (
-                    <span className="truncate flex-grow animate-fade-in">{item.label}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* DYNAMIC GROUNDING MODAL SWITCHES */}
-          <div>
-            {!isSidebarCollapsed && (
-              <p className="px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 text-fuchsia-500 animate-fade-in">
-                Grounding & AI Modes
-              </p>
-            )}
-            <div className="space-y-0.5">
-              {[
-                { 
-                  label: "Live Google Search", 
-                  icon: "🌐", 
-                  active: webSearchMode, 
-                  action: () => {
-                    setWebSearchMode(!webSearchMode);
-                    showToastAlert(!webSearchMode ? "🌐 Engaged Google Live search grounding!" : "🌐 Disabled web search grounding");
-                  } 
-                },
-                { 
-                  label: "Image Generation", 
-                  icon: "🎨", 
-                  active: isImageGenMode, 
-                  action: () => {
-                    const next = !isImageGenMode;
-                    setIsImageGenMode(next);
-                    if (next) setImageMode(false);
-                    showToastAlert(next ? "🎨 Engaged creative painting image generation mode!" : "🎨 Disabled painting mode");
-                  } 
-                },
-                { 
-                  label: "Multimodal Vision", 
-                  icon: "📸", 
-                  active: imageMode, 
-                  action: () => {
-                    const next = !imageMode;
-                    setImageMode(next);
-                    if (next) setIsImageGenMode(false);
-                    showToastAlert(next ? "🎨 Engaged graphic analysis canvas mode!" : "🎨 Disabled graphic mode");
-                  } 
-                },
-              ].map((item, id) => (
-                <button
-                  key={id}
-                  onClick={item.action}
-                  className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
-                    isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
-                  } ${
-                    item.active 
-                      ? theme === "dark" ? "bg-zinc-800 text-white font-bold" : "bg-zinc-200 text-zinc-900 font-bold"
-                      : theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
-                  }`}
-                  title={item.label}
-                >
-                  <div className="relative flex items-center justify-center">
-                    <span className="text-base">{item.icon}</span>
-                    {item.active && (
-                      <span className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 border border-white dark:border-zinc-900 rounded-full animate-pulse" />
-                    )}
-                  </div>
-                  {!isSidebarCollapsed && (
-                    <div className="flex-1 flex justify-between items-center min-w-0 animate-fade-in">
-                      <span className="truncate">{item.label}</span>
-                      <span className={`text-[8px] px-1.5 py-0.2 rounded font-mono font-bold uppercase ${
-                        item.active 
-                          ? "bg-green-500/15 text-green-400" 
-                          : "bg-zinc-500/10 text-zinc-400"
-                      }`}>
-                        {item.active ? "On" : "Off"}
-                      </span>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
         </div>
 
         {/* BOTTOM UTILITY RAILS PART */}
         <div className={`mt-auto p-3.5 border-t border-zinc-200/50 dark:border-zinc-850/50 space-y-1.5 text-xs font-sans`}>
           
-          {/* Configure Secrets trigger */}
+          {/* Terms and Conditions (Mobile Only) */}
           <button
             onClick={() => {
-              checkServerConfig();
-              setShowConfigModal(true);
-              if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
+              showToastAlert("Terms & Conditions");
             }}
-            className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
+            className={`w-full flex md:hidden items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
               isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
             } ${
               theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
             }`}
-            title="Configure Secrets API Keys"
+            title="Terms and Conditions"
           >
-            <span className="text-base">🔑</span>
+            <span className="text-base">📜</span>
             {!isSidebarCollapsed && (
-              <span className="truncate animate-fade-in text-emerald-500 dark:text-emerald-400">Settings & Keys</span>
-            )}
-          </button>
-
-          {/* Toggle visual mode switcher */}
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
-              isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
-            } ${
-              theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
-            }`}
-            title="Toggle theme view"
-          >
-            <span className="text-base">{theme === "dark" ? "☀️" : "🌙"}</span>
-            {!isSidebarCollapsed && (
-              <span className="truncate animate-fade-in">
-                {theme === "dark" ? "Light theme" : "Dark theme"}
+              <span className="truncate animate-fade-in font-bold tracking-[0.1em] uppercase text-[9px]">
+                TERMS & CONDITIONS
               </span>
             )}
           </button>
@@ -2853,8 +3140,8 @@ export default function App() {
                 }`}
                 title="Sign In with Sandbox"
               >
-                <span className="text-base">👤</span>
-                {!isSidebarCollapsed && <span className="animate-fade-in text-black dark:text-zinc-250">Sign In</span>}
+                <Users className="w-5 h-5 text-blue-600 dark:text-blue-500" />
+                {!isSidebarCollapsed && <span className="animate-fade-in font-bold tracking-[0.15em] uppercase text-[10px] text-blue-700 dark:text-blue-400">SIGN IN</span>}
               </button>
             )}
           </div>
@@ -3117,7 +3404,7 @@ export default function App() {
       </header>
 
       {/* --- SCROLL CONTAINED MESSAGE CONTAINER --- */}
-      <main className="relative flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 py-8 w-full max-w-full mx-auto flex flex-col justify-between">
+      <main className="relative flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 py-8 w-full max-w-full mx-auto flex flex-col justify-between rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 m-2 outline-none">
         
         {messages.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none z-0">
@@ -3211,15 +3498,14 @@ export default function App() {
 
             </div>
 
-            {/* Input bar placed right below welcome to NextGen Ai */}
+            {/* Input bar has been moved to fixed bottom container */}
             <div className="w-full max-w-2xl pt-2">
-              {renderInputForm()}
             </div>
 
           </div>
         ) : (
           // Messages thread list
-          <div className="space-y-8 pb-32 w-full max-w-3xl mx-auto">
+          <div className="space-y-8 pb-32 w-full max-w-3xl lg:max-w-4xl mx-auto">
             {messages.map((msg) => {
               const isUser = msg.role === "user";
               return (
@@ -3383,81 +3669,81 @@ export default function App() {
             )}
 
             <div ref={messagesEndRef} />
-
-            {/* Input Form at the bottom of messages list (non-sticky/scrollable) */}
-            <div className="mt-8 pt-6 border-t border-zinc-200/20 dark:border-zinc-800/25 max-w-2xl mx-auto w-full">
-              {attachedImage && (
-                <div className={`relative inline-flex items-center rounded-xl border p-1 mb-3 ml-2 animate-fade-in shadow-xl ${
-                  attachedImage.isDocument 
-                    ? "bg-emerald-950/20 border-emerald-500/30 px-3 py-1.5 min-w-40 gap-2.5" 
-                    : "w-20 overflow-hidden border-zinc-750 bg-zinc-950 p-1 bg-gradient-to-tr from-purple-500 to-blue-500"
-                }`}>
-                  {attachedImage.isDocument ? (
-                    <div className="flex flex-col gap-1.5 min-w-40 p-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xl shrink-0">📄</span>
-                        <div className="min-w-0">
-                          <p className={`text-[10px] font-bold truncate max-w-[140px] ${theme === "dark" ? "text-zinc-100" : "text-zinc-800"}`}>
-                            {attachedImage.fileName || "Drive_File.pdf"}
-                          </p>
-                          <p className="text-[8px] text-emerald-400 font-mono tracking-tight font-semibold uppercase">Cloud Doc Connected</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          showToastAlert("Running PDF.co OCR text extractor...");
-                          try {
-                            const response = await fetch("/api/pdfco/extract-text", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                base64: attachedImage.base64,
-                                fileName: attachedImage.fileName || "doc.pdf",
-                                mimeType: "application/pdf"
-                              })
-                            });
-                            const data = await response.json();
-                            if (response.ok && data.text) {
-                              setInput(prev => {
-                                const header = `[Context File Detail: ${attachedImage.fileName || "Doc"}]\n`;
-                                return header + data.text + "\n\n" + prev;
-                              });
-                              showToastAlert("✨ OCR extraction complete! Input loaded.");
-                            } else {
-                              throw new Error(data.error || "OCR empty result");
-                            }
-                          } catch (err: any) {
-                            showToastAlert(`OCR Extraction Failed: ${err.message}`);
-                          }
-                        }}
-                        className="text-[9px] text-left hover:underline font-bold text-emerald-500 flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>⚡</span> Run OCR Extraction
-                      </button>
-                    </div>
-                  ) : (
-                    <img 
-                      src={attachedImage.previewUrl} 
-                      alt="File reference preview thumbnail" 
-                      referrerPolicy="no-referrer"
-                      className="w-full h-12 object-cover rounded" 
-                    />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setAttachedImage(null)}
-                    aria-label="Remove image"
-                    className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 bg-red-600 hover:bg-red-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-              {renderInputForm()}
-            </div>
           </div>
         )}
+
+        {/* Input Form at the bottom of messages list (sticky) */}
+        <div className="sticky bottom-0 mt-8 pt-4 pb-8 max-w-2xl lg:max-w-4xl mx-auto w-full z-20">
+          {attachedImage && (
+            <div className={`relative inline-flex items-center rounded-xl border p-1 mb-3 ml-2 animate-fade-in shadow-xl ${
+              attachedImage.isDocument 
+                ? "bg-emerald-950/20 border-emerald-500/30 px-3 py-1.5 min-w-40 gap-2.5" 
+                : "w-20 overflow-hidden border-zinc-750 bg-zinc-950 p-1 bg-gradient-to-tr from-purple-500 to-blue-500"
+            }`}>
+              {attachedImage.isDocument ? (
+                <div className="flex flex-col gap-1.5 min-w-40 p-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xl shrink-0">📄</span>
+                    <div className="min-w-0">
+                      <p className={`text-[10px] font-bold truncate max-w-[140px] ${theme === "dark" ? "text-zinc-100" : "text-zinc-800"}`}>
+                        {attachedImage.fileName || "Drive_File.pdf"}
+                      </p>
+                      <p className="text-[8px] text-emerald-400 font-mono tracking-tight font-semibold uppercase">Cloud Doc Connected</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      showToastAlert("Running PDF.co OCR text extractor...");
+                      try {
+                        const response = await fetch("/api/pdfco/extract-text", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            base64: attachedImage.base64,
+                            fileName: attachedImage.fileName || "doc.pdf",
+                            mimeType: "application/pdf"
+                          })
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.text) {
+                          setInput(prev => {
+                            const header = `[Context File Detail: ${attachedImage.fileName || "Doc"}]\n`;
+                            return header + data.text + "\n\n" + prev;
+                          });
+                          showToastAlert("✨ OCR extraction complete! Input loaded.");
+                        } else {
+                          throw new Error(data.error || "OCR empty result");
+                        }
+                      } catch (err: any) {
+                        showToastAlert(`OCR Extraction Failed: ${err.message}`);
+                      }
+                    }}
+                    className="text-[9px] text-left hover:underline font-bold text-emerald-500 flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>⚡</span> Run OCR Extraction
+                  </button>
+                </div>
+              ) : (
+                <img 
+                  src={attachedImage.previewUrl} 
+                  alt="File reference preview thumbnail" 
+                  referrerPolicy="no-referrer"
+                  className="w-full h-12 object-cover rounded" 
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => setAttachedImage(null)}
+                aria-label="Remove image"
+                className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 bg-red-600 hover:bg-red-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center shadow cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          {renderInputForm()}
+        </div>
       </main>
 
       {/* Voice active overlay container */}
@@ -6023,7 +6309,7 @@ export default function App() {
       )}
 
       {/* --- PREMIUM FIREBASE AUTHENTICATION DIALOG MODAL --- */}
-      {false && showAuthModal && (
+      {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans">
           <div className={`border p-6 rounded-3xl max-w-sm w-full space-y-5 shadow-2xl relative transition-all duration-300 ${
             theme === "dark" 
@@ -6053,11 +6339,14 @@ export default function App() {
                 </svg>
               </div>
               <h3 className="text-lg font-display font-black tracking-tight leading-none text-zinc-900 dark:text-white">
-                {isSignUp ? "Generate NextGen Account" : "Access NextGen Platform"}
+                Access NextGen Platform
               </h3>
               <p className="text-[11px] opacity-60">
-                {isSignUp ? "Register a new secure profile sandbox" : "Sign in to activate personalization features"}
+                Sign in to activate personalization features
               </p>
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                <span className="font-bold">Note:</span> If login popups are blocked or close instantly, please click the ↗️ "Open in new tab" icon at the top right of this preview window.
+              </div>
             </div>
 
             {/* Dynamic Status / Error Warning Notices */}
@@ -6075,89 +6364,17 @@ export default function App() {
               </div>
             )}
 
-            {/* Classic Credentials Form */}
-            <form onSubmit={handleEmailAuth} className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider opacity-65 flex items-center gap-1.5">
-                  <Mail className="w-3 h-3 text-blue-500" /> Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="name@example.com"
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  className={`w-full text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                    theme === "dark" 
-                      ? "bg-zinc-900 border-zinc-800 text-white placeholder-zinc-600" 
-                      : "bg-zinc-50 border-zinc-200 text-zinc-900 placeholder-zinc-400"
-                  }`}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase tracking-wider opacity-65 flex items-center gap-1.5">
-                  <Lock className="w-3 h-3 text-blue-500" /> Security Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Min. 6 characters"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  className={`w-full text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-                    theme === "dark" 
-                      ? "bg-zinc-900 border-zinc-800 text-white placeholder-zinc-600" 
-                      : "bg-zinc-50 border-zinc-200 text-zinc-900 placeholder-zinc-400"
-                  }`}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full py-2 px-3 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-700 transition-all shadow-md mt-1 cursor-pointer"
-              >
-                {authLoading ? (
-                  <span className="flex items-center justify-center gap-1.5">
-                    <svg className="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Signing progress...
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.08H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.92l3.66-2.83z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.08l3.66 2.83C6.71 7.31 9.14 5.38 12 5.38z"/>
-                    </svg>
-                    {isSignUp ? "Register Account Profile" : "Sign In to Sandbox"}
-                  </span>
-                )}
-              </button>
-            </form>
-
-            {/* Separator Divider */}
-            <div className="relative flex py-0.5 items-center">
-              <div className="flex-grow border-t border-zinc-200/20 dark:border-zinc-800/60"></div>
-              <span className="flex-shrink mx-3.5 text-[8px] font-bold uppercase tracking-widest opacity-40">Or continue with</span>
-              <div className="flex-grow border-t border-zinc-200/20 dark:border-zinc-800/60"></div>
-            </div>
-
             {/* Realistic OAuth Providers Cluster */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               
               {/* 1. Google Gmail Provider */}
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={authLoading}
-                className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                   theme === "dark" 
-                    ? "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-900/40 hover:text-white" 
+                    ? "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-white" 
                     : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
                 }`}
               >
@@ -6171,7 +6388,7 @@ export default function App() {
                 Continue with Google
               </button>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 {/* 2. Facebook Provider */}
                 <button
                   type="button"
@@ -6179,7 +6396,7 @@ export default function App() {
                   disabled={authLoading}
                   className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     theme === "dark" 
-                      ? "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-900" 
+                      ? "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800" 
                       : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
                   }`}
                 >
@@ -6196,7 +6413,7 @@ export default function App() {
                   disabled={authLoading}
                   className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     theme === "dark" 
-                      ? "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-900" 
+                      ? "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800" 
                       : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
                   }`}
                 >
@@ -6207,19 +6424,21 @@ export default function App() {
                 </button>
               </div>
 
-            </div>
-
-            {/* Account toggle link footer */}
-            <div className="text-center pt-1.5 border-t border-zinc-200/10 dark:border-zinc-800/40">
+              {/* 4. GitHub Provider */}
               <button
                 type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  setAuthError(null);
-                }}
-                className="text-xs text-blue-500 hover:underline hover:text-blue-400 font-semibold cursor-pointer"
+                onClick={handleGithubSignIn}
+                disabled={authLoading}
+                className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                  theme === "dark" 
+                    ? "bg-zinc-900 border-zinc-800 text-zinc-200 hover:bg-zinc-800 hover:text-white" 
+                    : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                }`}
               >
-                {isSignUp ? "Already registered? Sign In" : "Need account profile? Sign Up"}
+                <svg className="w-4 h-4 fill-current text-zinc-800 dark:text-zinc-200" viewBox="0 0 24 24">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                </svg>
+                Continue with GitHub
               </button>
             </div>
 

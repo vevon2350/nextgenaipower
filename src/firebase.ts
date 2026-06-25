@@ -3,7 +3,8 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   FacebookAuthProvider, 
-  OAuthProvider 
+  OAuthProvider,
+  GithubAuthProvider
 } from "firebase/auth";
 import { initializeFirestore } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
@@ -21,7 +22,11 @@ export const auth = getAuth(app);
 
 // Authentication Providers
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 export const facebookProvider = new FacebookAuthProvider();
 export const appleProvider = new OAuthProvider("apple.com");
+export const githubProvider = new GithubAuthProvider();
 
 export default app;
