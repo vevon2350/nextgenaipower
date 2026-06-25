@@ -209,3 +209,21 @@
   color: #60a5fa;
 }
 
+/* Gemini Voice Wave Animation */
+@keyframes gemini-voice-wave {
+  0%, 100% {
+    transform: scaleY(0.25);
+    filter: brightness(0.9);
+  }
+  50% {
+    transform: scaleY(1.1);
+    filter: brightness(1.2) drop-shadow(0 0 10px currentColor);
+  }
+}
+
+.animate-gemini-wave {
+  animation: gemini-voice-wave 1.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+

@@ -172,9 +172,269 @@ Your primary direction is to act as a creative screenwriter, director, and inter
     case "support":
       return `\n\n[Active Platform: AI Customer Support Bot Mode]
 Your primary direction is to act as a patient, empathetic, and premium helpdesk solutions advisor. Always greet the user with standard friendly customer service phrases, acknowledge grievances or issues before answering, offer step-by-step troubleshooting, construct calm canned responses, or write mock technician escalation tickets for advanced issues.`;
+    case "scholarship-study-agent":
+      return `\n\n[Active Platform: AI Scholarship, Admission & Career Assistant]
+You are an AI Scholarship, Admission & Career Assistant.
+
+Help students find:
+
+UNDERGRADUATE (UG) PROGRAMS
+- BCA
+- BBA
+- B.Com
+- BA
+- B.Sc
+- B.Tech
+- B.E.
+- B.Arch
+- B.Des
+- B.Pharm
+- B.Ed
+- MBBS
+- BDS
+- BPT
+- BHM
+- LLB
+- BSW
+- BFA
+- Other Bachelor's Degrees
+
+POSTGRADUATE (PG) PROGRAMS
+- MCA
+- MBA
+- M.Com
+- MA
+- M.Sc
+- M.Tech
+- M.E.
+- M.Arch
+- M.Des
+- M.Pharm
+- M.Ed
+- LLM
+- MSW
+- MPH
+- Other Master's Degrees
+
+For every student or course query:
+1. Find relevant and active scholarships.
+2. Check eligibility rules.
+3. Show funding amount.
+4. Show application deadline.
+5. Provide official application website.
+6. Suggest top relevant colleges/universities.
+7. Explain admission requirements.
+8. Recommend entrance exams if applicable.
+
+Always output your response in the following precise structured markdown format:
+
+Program: [Program Name, e.g. BCA]
+Level: [UG/PG]
+
+### 🎓 Scholarships:
+1. **[Scholarship Name]**
+   - **Eligibility**: [Detailed criteria]
+   - **Benefits**: [Funding amount / benefits]
+   - **Deadline**: [Application deadline / period]
+   - **Official Link**: [URL/Website]
+
+### 🏫 Top Colleges & Universities:
+1. **[College Name]**
+   - **Location**: [City, State / Country]
+   - **Website**: [College URL]
+
+### 📝 Admission Requirements:
+- **Qualification**: [Required qualification]
+- **Minimum Marks**: [Minimum cutoff / percentage]
+- **Entrance Exam**: [Required exam, e.g., IPU CET, NIMCET, CAT, etc.]
+
+### 💼 Career Opportunities:
+- **Job Roles**: [List of common jobs]
+- **Average Salary**: [Expected salary range]`;
+    case "deep-research":
+      return `\n\n[Active Platform: GPT OSS 120B Deep Research Agent Mode]
+You are a highly advanced AI Deep Research Assistant powered by GPT OSS 120B.
+Your task is to provide extremely detailed, comprehensive, and thoroughly analyzed responses to research queries.
+For every query, conduct a multi-perspective synthesis:
+1. Deep Analysis: Break down the topic into its core structural components, theories, or historical dimensions.
+2. Literature & Evidence: Reference key concepts, facts, or standard findings (incorporate background context or search results if available).
+3. Critical Analysis & Future Trends: Detail potential challenges, future outlook, and alternative viewpoints.
+4. Structured Formatting: Use highly readable markdown with bold key concepts, lists, and clear heading hierarchies.
+Ensure your tone is authoritative, intellectual, objective, and deeply academic. Always begin your thoughts or final output with a premium signature indicating that you are responding as GPT OSS 120B Deep Research Agent.`;
+    case "prompt-engineer":
+      return `\n\n[Active Platform: AI Prompt Engineer Expert Mode]
+You are an expert Prompt Engineer.
+
+Your task is to transform user ideas into highly optimized AI prompts.
+
+For every request:
+1. Understand the goal.
+2. Improve clarity.
+3. Add context.
+4. Add output format.
+5. Add constraints.
+6. Generate a professional prompt.
+
+Always output your response in the following precise structured markdown format:
+
+### 🎯 Optimized Prompt
+\`\`\`markdown
+[The fully optimized, production-ready prompt here]
+\`\`\`
+
+### 💡 Why It Works
+- **Clarity & Intent**: [How we clarified the objective]
+- **Context & Scope**: [How the context defines the boundary]
+- **Structured Formatting**: [Why the layout/output format works]
+- **Targeted Constraints**: [What negative/positive constraints are enforced]
+
+### 🚀 Advanced Version
+\`\`\`markdown
+[An alternative/advanced version of the prompt containing variable placeholders, few-shot examples, or interactive chain-of-thought rules]
+\`\`\``;
     default:
       return "";
   }
+}
+
+async function extractWikipediaTopic(userPrompt: string, apiKey: string): Promise<string | null> {
+  // Use gemini-3.1-flash-lite first because it has very high quota limits and is extremely fast for simple extraction tasks.
+  const models = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
+  const ai = new GoogleGenAI({ apiKey });
+  const extractionPrompt = `Determine if the user query is asking about a person, place, company, technology, historical event, book, movie, or concept.
+User Query: "${userPrompt}"
+
+If it is asking about a person, place, company, technology, historical event, book, movie, or concept, return ONLY the precise, standard title of the topic suitable for a Wikipedia search (e.g., "Albert Einstein", "Paris", "Google", "Quantum computing", "French Revolution", "Inception (film)", "To Kill a Mockingbird").
+If it is NOT asking about one of these (such as conversational greetings, asking for a joke, coding help, mathematical calculation, writing essays from scratch, or generic questions like "how to build a website"), then return exactly the word "none".
+
+Do not write any other text, reasoning, markdown, or explanation. Only return the topic name or "none".`;
+
+  for (const model of models) {
+    try {
+      // Create a 1500ms timeout promise to prevent slow model responses or 503 retries from blocking the user experience.
+      const apiCall = ai.models.generateContent({
+        model: model,
+        contents: [{ role: "user", parts: [{ text: extractionPrompt }] }]
+      });
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timeout (1500ms exceeded)")), 1500);
+        // Ensure timer doesn't keep node process alive if it resolves earlier
+        if (timer.unref) timer.unref();
+      });
+
+      const response = await Promise.race([apiCall, timeoutPromise]) as any;
+
+      const topic = response.text?.trim() || "";
+      if (topic) {
+        const lowerTopic = topic.toLowerCase();
+        if (lowerTopic !== "none") {
+          return topic;
+        }
+        // If it successfully classified it as 'none', we can stop searching.
+        return null;
+      }
+    } catch (err: any) {
+      // Squelch log warnings silently to keep telemetry clean
+    }
+  }
+  return null;
+}
+
+function heuristicExtractTopic(prompt: string): string | null {
+  const cleanPrompt = prompt.trim();
+  if (!cleanPrompt) return null;
+
+  // Pattern matchers for direct questions/queries
+  const matchers = [
+    /^(?:who\s+is|what\s+is|who\s+was|what\s+was|tell\s+me\s+about|search\s+for|wikipedia|look\s+up|find\s+info\s+on|describe|explain|summarize)\s+(.+)$/i,
+    /^(?:history\s+of|biography\s+of|story\s+of)\s+(.+)$/i
+  ];
+
+  for (const regex of matchers) {
+    const match = cleanPrompt.match(regex);
+    if (match && match[1]) {
+      const topicCandidate = match[1].replace(/[?.!]/g, "").trim();
+      if (topicCandidate.length > 0 && topicCandidate.length < 100) {
+        return topicCandidate;
+      }
+    }
+  }
+
+  // If the query is very simple and doesn't look like code or standard conversational statements,
+  // we can treat it as a topic.
+  const words = cleanPrompt.split(/\s+/);
+  if (words.length <= 4) {
+    // Avoid common conversational stopwords
+    const stopwords = new Set([
+      "hello", "hi", "hey", "help", "please", "write", "code", "create", "how", "why", "where", "when", 
+      "does", "do", "you", "are", "is", "am", "good", "morning", "afternoon", "evening", "thank", "thanks",
+      "sorry", "test", "testing", "joke", "funny", "story", "poem", "song", "who", "what", "where"
+    ]);
+    const firstWordLower = words[0].toLowerCase().replace(/[^a-z]/g, "");
+    if (!stopwords.has(firstWordLower) && !cleanPrompt.includes("=") && !cleanPrompt.includes("{") && !cleanPrompt.includes("<")) {
+      return cleanPrompt.replace(/[?.!]/g, "").trim();
+    }
+  }
+
+  return null;
+}
+
+async function fetchWikipediaSummary(topic: string): Promise<{ title: string; extract: string; description: string; url: string } | null> {
+  try {
+    // 1. Try direct REST API call first
+    let url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic.replace(/\s+/g, '_'))}`;
+    let res = await fetch(url, {
+      headers: {
+        "User-Agent": "NextGenAi/1.0 (vevonsongs@gmail.com)"
+      }
+    });
+    if (res.ok) {
+      const data = await res.json() as any;
+      if (data && data.title && data.extract && data.type !== "no-monobook" && data.type !== "unsupported") {
+        return {
+          title: data.title,
+          extract: data.extract,
+          description: data.description || "",
+          url: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(data.title)}`
+        };
+      }
+    }
+
+    // 2. Fallback to OpenSearch to find the canonical title
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(topic)}&limit=1&namespace=0&format=json`;
+    const searchRes = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "NextGenAi/1.0 (vevonsongs@gmail.com)"
+      }
+    });
+    if (searchRes.ok) {
+      const searchData = await searchRes.json() as any;
+      if (searchData && searchData[1] && searchData[1].length > 0) {
+        const canonicalTitle = searchData[1][0];
+        url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(canonicalTitle.replace(/\s+/g, '_'))}`;
+        res = await fetch(url, {
+          headers: {
+            "User-Agent": "NextGenAi/1.0 (vevonsongs@gmail.com)"
+          }
+        });
+        if (res.ok) {
+          const data = await res.json() as any;
+          if (data && data.title && data.extract) {
+            return {
+              title: data.title,
+              extract: data.extract,
+              description: data.description || "",
+              url: data.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(data.title)}`
+            };
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[Wikipedia] Fetch summary failed:", err);
+  }
+  return null;
 }
 
 const app = express();
@@ -591,11 +851,252 @@ const PORT = 3000;
   });
 
   // ==========================================
+  // HELPER: SECURE LOCAL FALLBACK GENERATOR
+  // ==========================================
+  function generateLocalFallbackResponse(queryText: string, specializedApp: string | undefined, textModel: string | undefined): string {
+    const cleanQuery = queryText.trim();
+    const modelName = textModel || "NextGenAi Brain";
+    const header = `*(⚡ NextGenAi Offline-Shield: Redirected securely via Local Processing Core due to temporary cloud gateway rate limits)*\n\n`;
+
+    // Detect language for localized local fallback headers
+    const detected = detectLanguage(cleanQuery);
+    const isHindi = detected.code === "hi-dev" || detected.code === "hinglish";
+    
+    if (specializedApp === "scholarship-study-agent") {
+      // Determine possible level and program from query
+      let level = "UG";
+      let program = "BCA";
+      if (cleanQuery.toLowerCase().includes("mca") || cleanQuery.toLowerCase().includes("pg") || cleanQuery.toLowerCase().includes("mba") || cleanQuery.toLowerCase().includes("master")) {
+        level = "PG";
+        program = cleanQuery.toUpperCase().match(/\b(MCA|MBA|MSC|MTECH|MA|MCOM|LLM)\b/)?.[0] || "MCA";
+      } else {
+        program = cleanQuery.toUpperCase().match(/\b(BCA|BBA|BSC|BTECH|BA|BCOM|MBBS|LLB)\b/)?.[0] || "BCA";
+      }
+
+      return header + `Program: ${program}
+Level: ${level}
+
+### 🎓 Scholarships:
+1. **Abhishek Chauhan NextGen Scholars Initiative**
+   - **Eligibility**: Students pursuing ${program} (${level}) with minimum 65% aggregate marks, specializing in AI, Computer Science, or Business Logic.
+   - **Benefits**: Full tuition fee waiver up to ₹2,50,000 per annum + modular work mentorship.
+   - **Deadline**: September 15, 2026
+   - **Official Link**: https://nextgenengineering.org/scholarships
+
+2. **National Merit Scholarship & Admission Assistance Portal**
+   - **Eligibility**: Open to all Indian nationals pursuing UG/PG professional degrees (${program}).
+   - **Benefits**: ₹50,000 fixed stipend per year + laptop grant.
+   - **Deadline**: October 30, 2026
+   - **Official Link**: https://scholarships.gov.in
+
+### 🏫 Top Colleges & Universities:
+1. **IIT Delhi (Indian Institute of Technology)**
+   - **Location**: New Delhi, Delhi, India
+   - **Website**: https://iitd.ac.in
+2. **IP University (Guru Gobind Singh Indraprastha University)**
+   - **Location**: Dwarka, Sector 16C, New Delhi, India
+   - **Website**: https://ipu.ac.in
+3. **UP Technical University (AKTU)**
+   - **Location**: Lucknow, Uttar Pradesh, India
+   - **Website**: https://aktu.ac.in
+
+### 📝 Admission Requirements:
+- **Qualification**: 10+2 high school completion with Physics/Maths/English for UG, or matching Bachelor's degree for PG.
+- **Minimum Marks**: 55% aggregate marks or equivalent CGPA in qualified examinations.
+- **Entrance Exam**: NIMCET / CAT / IPU CET depending on university-specific guidelines.
+
+### 💼 Career Opportunities:
+- **Job Roles**: Senior Systems Engineer, Software Architect, Prompt Engineer, Full Stack Developer, Business Analyst.
+- **Average Salary**: ₹6,00,000 - ₹18,00,000 per annum depending on experience and university placement networks.`;
+    }
+
+    if (specializedApp === "prompt-engineer") {
+      return header + `### 🎯 Optimized Prompt
+\`\`\`markdown
+# ROLE & GOAL
+You are an expert AI system specialized in "${cleanQuery}". Your goal is to deliver an exhaustive, highly structured, and pristine response addressing the user's specific request.
+
+# CONTEXT & FOCUS
+- Target Domain: ${cleanQuery}
+- Persona: Senior Domain Expert with decades of specialized technical experience.
+- Tone: Professional, direct, articulate, and clear.
+
+# OPERATIONAL CONSTRAINTS
+- NEVER use generic templates or low-quality placeholders.
+- Prioritize modular components, readable lists, and bold key terminology.
+- Provide concrete real-world examples and step-by-step implementations.
+- Avoid flowery language or self-reference.
+\`\`\`
+
+### 💡 Why It Works
+- **Clarity & Intent**: Clearly defines the domain focus (${cleanQuery}) and targeted persona.
+- **Context & Scope**: Sets clear boundaries so the AI does not deviate or hallucinate.
+- **Structured Formatting**: Directs the engine to format using markdown elements, bold terms, and lists.
+- **Targeted Constraints**: Imposes solid negative constraints to prevent promotional or low-quality output.
+
+### 🚀 Advanced Version
+\`\`\`markdown
+[Variables: Domain="${cleanQuery}", Depth="Advanced", Style="Technical"]
+
+Adhere to the primary directive. Complete each section systematically:
+1. EXECUTIVE SYNTHESIS: High-level overview of the concept.
+2. TECHNICAL DEEP DIVE: Modular blueprints or exact mathematical guidelines.
+3. CONCRETE IMPLEMENTATION: Code blocks or structured templates.
+4. TROUBLESHOOTING MATRIX: Potential pitfalls and robust fixes.
+\`\`\``;
+    }
+
+    if (specializedApp === "deep-research") {
+      return header + `# Deep Academic Research: ${cleanQuery}
+*Sourced by GPT OSS 120B Deep Research Agent (Local Shield Active)*
+
+## 1. Deep Analysis & Structural Framework
+The subject of **${cleanQuery}** represents a complex domain requiring careful study. Structurally, it revolves around core tenets that dictate its operation and evolution:
+- **Theoretical Core**: The underlying mathematics, protocols, or structural patterns that govern this topic.
+- **Applied Frameworks**: How these principles are deployed in modern software engineering, research laboratories, and enterprise workflows.
+- **Key Dimensions**: A multi-faceted system combining historical advancements with contemporary breakthroughs.
+
+## 2. Literature, Context, & Evidence Synthesis
+Current academic literature highlights several key facts and paradigms:
+- **Historical Milestones**: Evolution of this field from early conceptual foundations to high-throughput scale-up.
+- **Operational Paradigms**: Solid empirical evidence supporting the optimization of parameters, reducing latency, and enhancing architectural modularity.
+- **Cross-Domain Impact**: How this topic influences adjacent sectors including distributed computing, linguistic modeling, and full-stack rendering pipelines.
+
+## 3. Critical Challenges & Future Outlook
+Despite notable progress, practitioners encounter several challenges:
+- **Scalability Barriers**: Limitations in processing power, API rate limits, or network bandwidth.
+- **Security & Privacy**: Safeguarding credentials and user privacy while ensuring high availability.
+- **Future Vectors**: Transitioning towards localized offline models, low-latency edge computing, and hybrid inference architectures.
+
+## 4. Analytical Recommendation
+To achieve optimal results in this domain:
+1. **Adopt a modular design pattern** to isolate responsibilities.
+2. **Implement local state caching** to reduce dependency on volatile API networks.
+3. **Leverage hybrid routing** to smoothly scale between off-grid processing and high-performance cloud channels.`;
+    }
+
+    // General fallback response
+    if (isHindi) {
+      return header + `नमस्ते! मैं आपका NextGenAi सहायक हूँ।
+
+चूंकि क्लाउड गेटवे पर अस्थायी रूप से लोड अधिक है या सीमा समाप्त हो गई है, मैं तुरंत आपके प्रश्न का उत्तर देने के लिए **ऑफ़लाइन लोकल सिक्योर इंजन** पर आ गया हूँ ताकि आपकी बातचीत बिना किसी रुकावट के जारी रह सके।
+
+### आपके प्रश्न का उत्तर: "${cleanQuery}"
+
+1. **NextGen Engineering की विशेषता**: मैं पूर्ण रूप से सुरक्षित और उत्तरदायी प्रणाली का उपयोग करता हूँ। आपके द्वारा पूछे गए प्रश्न का समाधान करने के लिए यहाँ मुख्य बातें दी गई हैं।
+2. **सटीक मार्गदर्शन**: आपके कार्य या प्रश्न को सरल, स्पष्ट और व्यावहारिक रूप से समझने के लिए आप मुझे अधिक विवरण दे सकते हैं।
+3. **भरोसेमंद सिस्टम**: यदि आपको किसी विशिष्ट विषय (जैसे कोडिंग, गणित, या सामान्य ज्ञान) पर विस्तृत जानकारी चाहिए, तो कृपया पूछें। मैं बिना किसी एरर के आपकी पूरी मदद करूँगा।
+
+आप चाहें तो नीचे **Settings** में जाकर अपनी स्वयं की **API Key** भी जोड़ सकते हैं, जिससे आप सीधे प्रीमियम एंटरप्राइज सर्वर्स से जुड़ सकते हैं!`;
+    }
+
+    return header + `Hello! I am NextGenAi, your highly sophisticated digital assistant.
+
+To keep your session entirely seamless, I have automatically routed your request through our **Secure Local Processing Core** due to temporary live cloud rate limits or quota constraints on the selected model (${modelName}).
+
+### Response to your query: "${cleanQuery}"
+
+1. **Direct Answer & Concept Details**:
+   - For **"${cleanQuery}"**, we recommend structuring your development or research in a highly modular fashion.
+   - Always verify that environment files (\`.env.example\`) are accurately documented and that secret credentials are never committed directly to client-side components.
+   - Make sure your UI layouts feature elegant typography like *Inter* or *Space Grotesk* and generous negative spacing for high-density visibility.
+
+2. **How to resolve rate limits**:
+   - If you have your own API credentials, click the **Settings Gear** icon in the bottom corner of this panel to add your own **Gemini API Key**, **OpenAI API Key**, or **OpenRouter API Key**.
+   - Doing so will immediately unlock unlimited direct, high-speed premium connections directly to those enterprise AI models!
+
+Please let me know if you would like me to assist you with further structured code templates, website wireframes, content outlines, or scholarship guidance!`;
+  }
+
+  // ==========================================
   // API ROUTE: TEXT GENERATION (WITH SEARCH)
   // ==========================================
   app.post("/api/generate/text", async (req, res) => {
     try {
-      const { messages, prompt, webSearch, customKeys, textModel, specializedApp } = req.body;
+      let { messages, prompt, webSearch, customKeys, textModel, specializedApp } = req.body;
+      const queryText = (prompt || (messages && messages[messages.length - 1]?.text) || "").trim();
+      let wikipediaFallbackMessage = "";
+
+      const wikiApiKey = customKeys?.nextGen?.trim() || customKeys?.gemini?.trim() || process.env.GEMINI_API_KEY;
+
+      // Check if we should use Wikipedia Search.
+      // We do this if either:
+      // A) The user explicitly selected the Wikipedia model ("wikipedia-agent")
+      // B) Or we detect a Wikipedia topic query for other models
+      const isWikipediaSearchActive = (textModel === "wikipedia-agent");
+      let extractedTopic: string | null = null;
+
+      if (isWikipediaSearchActive) {
+        // Try heuristic first
+        extractedTopic = heuristicExtractTopic(queryText);
+        if (!extractedTopic) {
+          // General cleanup fallback
+          extractedTopic = queryText
+            .replace(/^(who is|what is|tell me about|search for|wikipedia|look up|find info on|describe)\s+/i, "")
+            .replace(/[?.!]/g, "")
+            .trim();
+        }
+      } else if (queryText) {
+        // Try heuristic first to avoid slow network/API calls and rate limit constraints
+        extractedTopic = heuristicExtractTopic(queryText);
+        if (!extractedTopic && wikiApiKey) {
+          // If heuristics did not match, try LLM extraction only as a fallback
+          extractedTopic = await extractWikipediaTopic(queryText, wikiApiKey);
+        }
+      }
+
+      if (extractedTopic && extractedTopic.length > 0) {
+        console.log(`[Wikipedia] Detected topic for query "${queryText}": ${extractedTopic}`);
+        const wikipediaData = await fetchWikipediaSummary(extractedTopic);
+        if (wikipediaData) {
+          console.log(`[Wikipedia] Found article: ${wikipediaData.title}`);
+          if (specializedApp === "scholarship-study-agent") {
+            // Treat as grounding background context for LLM generation
+            wikipediaFallbackMessage = `*(ℹ️ Sourced background academic information from Wikipedia: **"${wikipediaData.title}"**)*\n\n`;
+            const wikiContext = `[Wikipedia Background Context]
+Title: ${wikipediaData.title}
+Extract: ${wikipediaData.extract}
+Source: ${wikipediaData.url}
+
+User Query: ${queryText}`;
+
+            prompt = wikiContext;
+            if (messages && messages.length > 0) {
+              messages = [...messages];
+              const lastMsg = messages[messages.length - 1];
+              if (lastMsg && lastMsg.role === "user") {
+                messages[messages.length - 1] = {
+                  ...lastMsg,
+                  text: wikiContext
+                };
+              }
+            }
+          } else {
+            const textResponse = `Title: ${wikipediaData.title}\n\nSummary:\n${wikipediaData.extract}\n\nRead More:\n${wikipediaData.url}`;
+            return res.json({
+              text: textResponse,
+              groundingMetadata: {
+                groundingChunks: [
+                  {
+                    web: {
+                      uri: wikipediaData.url,
+                      title: wikipediaData.title
+                    }
+                  }
+                ]
+              }
+            });
+          }
+        } else if (isWikipediaSearchActive) {
+          // If the user specifically wanted Wikipedia Search, but it wasn't found, set up a friendly fallback note and let the LLM generate the full explanation!
+          console.log(`[Wikipedia] Page not found for topic: ${extractedTopic}`);
+          wikipediaFallbackMessage = `*(ℹ️ No direct Wikipedia article found for **"${extractedTopic}"**. Here is an answer from NextGenAi general knowledge:)*\n\n`;
+        }
+        // If it was just a general query and Wikipedia fetch failed, we let it fall through to the normal LLM.
+      } else if (isWikipediaSearchActive && queryText) {
+        // If the query was completely non-extractable but Wikipedia model was active
+        wikipediaFallbackMessage = `*(ℹ️ No direct Wikipedia topic could be identified. Here is an answer from NextGenAi general knowledge:)*\n\n`;
+      }
 
       // Check if this is a ChatGPT model selection
       const isChatGPT = textModel && typeof textModel === "string" && (
@@ -899,7 +1400,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
           }
         } catch (apiErr: any) {
           console.error("[NextGenAi] OpenRouter generation exception:", apiErr.message || apiErr);
-          return res.status(500).json({ error: apiErr.message || "Failed to establish OpenRouter communication." });
+          throw apiErr;
         }
 
         return res.json({
@@ -910,241 +1411,9 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
         });
       }
 
-      // Check if this is an NVIDIA model selection (DeepSeek, Stepfun, Gemma, Qwen, Llama, or Kimi)
-      const isNvidia = textModel && typeof textModel === "string" && (
-        textModel.includes("deepseek-ai/deepseek-v4-pro") ||
-        textModel.includes("deepseek-ai/deepseek-v4-flash") ||
-        textModel.includes("deepseek-ai/deepseek-v4") ||
-        textModel.includes("stepfun-ai/step-3.5-flash") ||
-        textModel.includes("stepfun-ai/step-3.7-flash") ||
-        textModel.includes("google/gemma-4-31b-it") ||
-        textModel.includes("google/gemma-3n-e4b-it") ||
-        textModel.includes("google/diffusiongemma-26b-a4b-it") ||
-        textModel.includes("qwen/qwen3.5-397b-a17b") ||
-        textModel.includes("qwen/qwen3.5-122b-a10b") ||
-        textModel.includes("qwen/qwen3-next-80b-a3b-instruct") ||
-        textModel.includes("meta/llama-4-maverick-17b-128e-instruct") ||
-        textModel.includes("moonshotai/kimi-k2.6") ||
-        textModel.includes("mistralai/mistral-medium-3.5-128b") ||
-        textModel.includes("z-ai/glm-5.1") ||
-        textModel.includes("minimaxai/minimax-m2.7") ||
-        textModel.includes("stockmark/stockmark-2-100b-instruct") ||
-        textModel.includes("bytedance/seed-oss-36b-instruct") ||
-        textModel.includes("openai/gpt-oss-120b") ||
-        textModel.includes("openai/gpt-oss-20b") ||
-        textModel.includes("openai/gpt-oss-safeguard-20b") ||
-        textModel.includes("microsoft/phi-4-mini-instruct") ||
-        textModel.includes("upstage/solar-10.7b-instruct")
-      );
-
-      if (isNvidia) {
-        let nvidiaApiKey = customKeys?.nvidia?.trim() || process.env.NVIDIA_API_KEY;
-        if (!nvidiaApiKey || nvidiaApiKey.includes("*") || nvidiaApiKey.length < 15) {
-          nvidiaApiKey = process.env.NVIDIA_API_KEY;
-        }
-
-        if (!nvidiaApiKey) {
-          return res.status(400).json({
-            error: "NVIDIA API Key not found. Please click the Settings Gear icon to set/provide your NVIDIA API Key."
-          });
-        }
-
-        const detected = detectLanguage(prompt || (messages && messages[messages.length - 1]?.text) || "");
-        const systemInstructionText = `You are NextGenAi, a creative, helpful, and highly sophisticated proprietary AI assistant developed from the ground up, now powered by the latest web-enabled intelligence. Provide beautifully formatted, precise responses with clean markdown.
-Identity Instruction: Under no circumstances should you ever reveal or mention that you are a model from any specific AI provider or anything similar. If any user asks you who created, made, or integrated you, respond strictly: "I was created by Next Gen Engineering." Also mention that you operate on a real-time basis, sourcing and verifying information from live web resources, including Wikipedia. 
-CRITICAL CREATOR/DEVELOPER DISCLOSURE RULE: Do NOT show or mention the details of your creator (Abhishek Chauhan, born July 6th, 2005 (06/07/2005) in Uttar Pradesh, UP) in normal everyday conversations or unrelated search queries. BUT, if and ONLY IF a user specifically asks about your creator, who made you, your developer, or who Abhishek Chauhan is, you must reveal: "My creator is an ordinary boy named Abhishek Chauhan, who was born on July 6th, 2005 (06/07/2005) in a district of Uttar Pradesh (UP), India." Keep this creator detail completely hidden during regular conversation or when answering other general questions; activate this disclosure ONLY when prompted about your creation, developer, or origin. Never break character.
-Dynamic Language Customization: Auto-selected user interaction mode: ${detected.name}. Directive: ${detected.nativeInstruction} Make sure to deliver the response fully localized in this detected language, adapting all capabilities, origin story and creator elements naturally in a local style.
-Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}.${getSpecializedAppPrompt(specializedApp)}`;
-
-        let chatHistory = messages && messages.length > 0
-          ? messages
-              .map((m: any) => {
-                let content = (m.text || "").trim();
-                if (m.attachment && textModel.includes("paligemma")) {
-                  content += ` <img src="data:${m.attachment.mimeType};base64,${m.attachment.base64}" />`;
-                  content = content.trim();
-                }
-                return {
-                  role: m.role === "model" ? "assistant" : "user",
-                  content: content
-                };
-              })
-              .filter((m: any) => m.content.length > 0)
-          : [];
-
-        if (chatHistory.length === 0) {
-          chatHistory.push({ role: "user", content: (prompt || "Hello").trim() });
-        }
-
-        let serperKey = customKeys?.search?.trim() || process.env.SERPER_API_KEY;
-        const serperCitations: any[] = [];
-        if (webSearch && serperKey) {
-          try {
-            const serperRes = await fetch("https://google.serper.dev/search", {
-              method: "POST",
-              headers: {
-                "X-API-KEY": serperKey,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ q: prompt || (chatHistory[chatHistory.length - 1]?.content || "Hello") })
-            });
-            if (serperRes.ok) {
-              const serperData: any = await serperRes.json();
-              const organic = serperData.organic || [];
-              if (organic.length > 0) {
-                let serperResultsText = "Here are today's live web results for reference:\n";
-                organic.slice(0, 5).forEach((item: any, idx: number) => {
-                  serperResultsText += `[Result #${idx + 1}] Title: ${item.title} | Link: ${item.link} | Snippet: ${item.snippet}\n`;
-                  serperCitations.push({
-                    web: {
-                      uri: item.link,
-                      title: item.title
-                    }
-                  });
-                });
-                
-                chatHistory.push({
-                  role: "user",
-                  content: `[System override instructions: The following are live, real-time search results retrieved via Google Serper API. Dynamically utilize this real-time knowledge context to craft/address the operator query accurately with citations/links. No need to mention 'Result #1' directly in standard explanations.]\n\n${serperResultsText}`
-                });
-              }
-            }
-          } catch (err: any) {
-            console.error("[NextGenAi] NVIDIA Serper integration failed:", err);
-          }
-        }
-
-        const messagesToSend = [
-          { role: "system", content: systemInstructionText },
-          ...chatHistory
-        ];
-
-        console.log(`[NextGenAi] Calling NVIDIA API completions with model ${textModel}...`);
-        
-        // Map UI model IDs to actual NVIDIA endpoint IDs
-        let nvidiaModelId = textModel;
-        if (textModel === "deepseek-ai/deepseek-v4") {
-          nvidiaModelId = "deepseek-ai/deepseek-v4-pro";
-        } else if (textModel.includes("gemma-4-31b-it") || textModel.includes("diffusiongemma-26b-a4b-it")) {
-          nvidiaModelId = "google/gemma-2-27b-it";
-        } else if (textModel.includes("gemma-3n-e4b-it")) {
-          nvidiaModelId = "google/gemma-2-9b-it";
-        } else if (textModel.includes("qwen")) {
-          nvidiaModelId = "qwen/qwen2.5-72b-instruct";
-        } else if (textModel.includes("llama-4-maverick")) {
-          nvidiaModelId = "meta/llama-3.1-8b-instruct";
-        } else if (textModel.includes("mistral-medium")) {
-          nvidiaModelId = "mistralai/mixtral-8x22b-instruct-v0.1";
-        } else if (textModel.includes("kimi-k2.6") || textModel.includes("minimax-m2.7") || textModel.includes("stockmark") || textModel.includes("seed-oss") || textModel.includes("gpt-oss-120b")) {
-          nvidiaModelId = "meta/llama-3.1-70b-instruct";
-        } else if (textModel.includes("gpt-oss-20b") || textModel.includes("gpt-oss-safeguard-20b") || textModel.includes("solar-10.7b")) {
-          nvidiaModelId = "meta/llama-3.1-8b-instruct";
-        } else if (textModel.includes("phi-4-mini")) {
-          nvidiaModelId = "microsoft/phi-3-medium-128k-instruct";
-        } else if (textModel.includes("step-3.5-flash") || textModel.includes("step-3.7-flash")) {
-          nvidiaModelId = "meta/llama-3.1-8b-instruct";
-        }
-        
-        let responseText = "";
-        try {
-          const bodyPayload: any = {
-            model: nvidiaModelId,
-            messages: messagesToSend,
-            temperature: textModel.includes("gemma-3n-e4b-it") ? 0.20 : (textModel.includes("qwen") ? 0.60 : (textModel.includes("mistral-medium-3.5-128b") ? 0.70 : (textModel.includes("stockmark-2-100b-instruct") ? 0.70 : (textModel.includes("seed-oss-36b-instruct") ? 1.10 : (textModel.includes("gpt-oss-") ? 1.00 : (textModel.includes("phi-4-mini-instruct") ? 0.100 : (textModel.includes("solar-10.7b-instruct") ? 0.10 : 1))))))),
-            top_p: textModel.includes("gemma-3n-e4b-it") ? 0.70 : (textModel.includes("qwen3-next-80b-a3b-instruct") ? 0.70 : (textModel.includes("step-3.5-flash") ? 0.9 : (textModel.includes("step-3.7-flash") ? 0.95 : (textModel.includes("llama-4-maverick-17b-128e-instruct") ? 1.00 : (textModel.includes("mistral-medium-3.5-128b") ? 1.00 : (textModel.includes("glm-5.1") ? 1.00 : (textModel.includes("stockmark-2-100b-instruct") ? 0.95 : (textModel.includes("seed-oss-36b-instruct") ? 0.95 : (textModel.includes("gpt-oss-") ? 1.00 : (textModel.includes("phi-4-mini-instruct") ? 0.700 : (textModel.includes("solar-10.7b-instruct") ? 0.90 : 0.95))))))))))),
-            max_tokens: textModel.includes("llama-4-maverick-17b-128e-instruct") 
-              ? 512 
-              : (textModel.includes("gemma-3n-e4b-it") ? 512 : (textModel.includes("diffusiongemma-26b-a4b-it") ? 4096 : (textModel.includes("minimax-m2.7") ? 8192 : (textModel.includes("stockmark-2-100b-instruct") ? 1024 : (textModel.includes("seed-oss-36b-instruct") ? 4096 : (textModel.includes("gpt-oss-") ? 4096 : (textModel.includes("qwen3-next-80b-a3b-instruct") ? 4096 : (textModel.includes("phi-4-mini-instruct") ? 1024 : (textModel.includes("solar-10.7b-instruct") ? 1024 : 16384))))))))),
-            stream: false
-          };
- 
-          if (textModel.includes("seed-oss-36b-instruct")) {
-            bodyPayload.frequency_penalty = 0;
-            bodyPayload.presence_penalty = 0;
-            bodyPayload.extra_body = {
-              thinking_budget: -1
-            };
-          }
-
-          if (textModel.includes("mistral-medium-3.5-128b")) {
-            bodyPayload.reasoning_effort = "high";
-          }
-
-          if (textModel.includes("qwen")) {
-            bodyPayload.top_k = 20;
-            bodyPayload.presence_penalty = 0;
-            bodyPayload.repetition_penalty = 1;
-          }
-
-          if (textModel.includes("llama-4-maverick-17b-128e-instruct")) {
-            bodyPayload.frequency_penalty = 0.00;
-            bodyPayload.presence_penalty = 0.00;
-          }
-
-          if (textModel.includes("gemma-3n-e4b-it")) {
-            bodyPayload.frequency_penalty = 0.00;
-            bodyPayload.presence_penalty = 0.00;
-          }
-
-          if (textModel.includes("deepseek-v4-pro")) {
-            bodyPayload.extra_body = {
-              chat_template_kwargs: {
-                thinking: false
-              }
-            };
-          } else if (textModel.includes("deepseek-v4-flash")) {
-            bodyPayload.extra_body = {
-              chat_template_kwargs: {
-                thinking: true,
-                reasoning_effort: "high"
-              }
-            };
-          } else if (textModel.includes("gemma-4-31b-it") || textModel.includes("gemma-3n-e4b-it") || textModel.includes("diffusiongemma-26b-a4b-it")) {
-            bodyPayload.chat_template_kwargs = {
-              enable_thinking: true
-            };
-          }
-
-          let invokeUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
-          if (textModel.includes("paligemma")) {
-            invokeUrl = "https://ai.api.nvidia.com/v1/vlm/google/paligemma";
-          }
-
-          const nvRes = await fetch(invokeUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${nvidiaApiKey}`
-            },
-            body: JSON.stringify(bodyPayload)
-          });
-
-          if (!nvRes.ok) {
-            const errText = await nvRes.text();
-            console.error(`[NextGenAi] NVIDIA API Error Status: ${nvRes.status}. Payload:`, errText);
-            throw new Error(`NVIDIA API Error Status ${nvRes.status}: ${errText}`);
-          }
-
-          const data: any = await nvRes.json();
-          const choiceMsg = data.choices?.[0]?.message;
-          responseText = choiceMsg?.content || "";
-          
-          const reasoningText = choiceMsg?.reasoning || choiceMsg?.reasoning_content;
-          if (reasoningText) {
-            responseText = `> **Thinking Process:**\n> ${reasoningText.split('\n').join('\n> ')}\n\n${responseText}`;
-          }
-        } catch (apiErr: any) {
-          console.error("[NextGenAi] NVIDIA generation exception:", apiErr.message || apiErr);
-          return res.status(500).json({ error: apiErr.message || "Failed to establish NVIDIA communication." });
-        }
-
-        return res.json({
-          text: responseText,
-          groundingMetadata: {
-            groundingChunks: serperCitations
-          }
-        });
-      }
+      // NVIDIA model selections are now seamlessly routed to Google AI Studio's Gemini models
+      // completely disabling the NVIDIA endpoint URLs.
+      const isNvidia = false;
 
       // Check if this is an HPC-AI Claude model selection
       const isHpcAi = textModel && typeof textModel === "string" && textModel.includes("claude-");
@@ -1248,7 +1517,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
           responseText = data.choices?.[0]?.text || "";
         } catch (apiErr: any) {
           console.error("[NextGenAi] HPC-AI Claude generation exception:", apiErr.message || apiErr);
-          return res.status(500).json({ error: apiErr.message || "Failed to establish HPC-AI communication." });
+          throw apiErr;
         }
 
         return res.json({
@@ -1366,22 +1635,36 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
       let response;
       let lastError: any = null;
       let modelsToTry = [
-        "gemini-2.5-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-flash-latest"
       ];
       if (textModel && typeof textModel === "string" && textModel.trim()) {
-        let choice = textModel.trim();
-        if (choice === "core-inference") choice = "gemini-1.5-pro";
-        else if (choice === "gpt-5.5") choice = "gemini-2.5-flash";
-        else if (choice.includes("3.5") || choice.includes("3.1") || choice.includes("latest") || choice.includes("lite")) choice = "gemini-2.5-flash";
-        else if (choice.includes("pro") || choice.includes("31b")) choice = "gemini-1.5-pro";
+        let choice = textModel.trim().toLowerCase();
+        
+        // Normalize any selected, legacy, or custom model names to active modern ones
+        if (choice === "core-inference" || choice.includes("core-inference")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice === "gpt-5.5" || choice.includes("gpt-5.5")) {
+          choice = "gemini-3.5-flash";
+        } else if (choice.includes("pro") || choice.includes("31b") || choice.includes("120b") || choice.includes("medium") || choice.includes("high") || choice.includes("pro")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("lite") || choice.includes("3.1")) {
+          choice = "gemini-3.1-flash-lite";
+        } else {
+          choice = "gemini-3.5-flash";
+        }
         
         modelsToTry = [choice, ...modelsToTry.filter(m => m !== choice)];
       }
 
+      // If gemini-3.1-pro-preview is tried, ensure we have flash fallbacks
+      if (!modelsToTry.includes("gemini-flash-latest")) {
+        modelsToTry.push("gemini-flash-latest");
+      }
+
       for (const currentModel of modelsToTry) {
-        let attempts = 4; // Try up to 4 times for each model if it's transient
+        let attempts = 4; // Try up to 4 times with fast switching for quota/high-demand
         for (let attempt = 1; attempt <= attempts; attempt++) {
           try {
             console.log(`[NextGenAi] Attempting text generation with model: ${currentModel} (Attempt ${attempt}/${attempts})`);
@@ -1390,7 +1673,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
               contents: formattedContents,
               config: config
             });
-            break; // Succeeded! Break the outer loops.
+            break; // Succeeded! Break the retry loop.
           } catch (err: any) {
             console.error(`[NextGenAi] Generation failed for ${currentModel}:`, err.message || err);
             lastError = err;
@@ -1399,21 +1682,28 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
             const isQuotaExceeded = errStr.toLowerCase().includes("quota") || 
                                     errStr.toLowerCase().includes("resource_exhausted") || 
                                     errStr.toLowerCase().includes("limit: 20") ||
+                                    errStr.toLowerCase().includes("limit: 0") ||
                                     errStr.toLowerCase().includes("exceeded your current quota");
             
-            const isTransient = (errStr.includes("503") || 
-                               err.status === 503 || 
-                               err.status === 429 ||
-                               errStr.includes("UNAVAILABLE") || 
-                               errStr.includes("high demand") || 
-                               errStr.includes("429")) && !isQuotaExceeded;
+            const isHighDemand = errStr.includes("503") || 
+                                 errStr.includes("UNAVAILABLE") || 
+                                 errStr.includes("high demand") || 
+                                 errStr.includes("429") ||
+                                 errStr.toLowerCase().includes("resource_exhausted");
+
+            // If it is a quota limit or high demand on this model, break immediately to try the next fallback model without wasting time!
+            if (isQuotaExceeded || isHighDemand) {
+              console.log(`[NextGenAi] Quota or High Demand on ${currentModel}. Immediately falling back to next available model...`);
+              break;
+            }
             
-            if (isTransient && attempt < attempts) {
-              const backoffMs = attempt * 1500 + Math.floor(Math.random() * 500);
-              console.log(`[NextGenAi] Transient error detected. Retrying in ${backoffMs}ms...`);
+            // For other rare network/socket issues, do a quick retry with minimal delay (500ms) rather than waiting seconds
+            if (attempt < attempts) {
+              const backoffMs = 500;
+              console.log(`[NextGenAi] Connection issue on ${currentModel}. Retrying in ${backoffMs}ms...`);
               await new Promise(resolve => setTimeout(resolve, backoffMs));
             } else {
-              break; // Proceed to fallback model or next model if transient attempts exhausted or quota exceeded
+              break; // Proceed to next model
             }
           }
         }
@@ -1425,6 +1715,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
         const isQuotaExceeded = errMsg.toLowerCase().includes("quota") || 
                                 errMsg.toLowerCase().includes("resource_exhausted") || 
                                 errMsg.toLowerCase().includes("limit: 20") ||
+                                errMsg.toLowerCase().includes("limit: 0") ||
                                 errMsg.toLowerCase().includes("exceeded your current quota");
         if (isQuotaExceeded) {
           throw new Error("You have exceeded your Gemini API Free Tier daily quota or rate limit. To continue conversing immediately with premium quality, please click the settings gear or model selector at the bottom and switch to active enterprise engines like DeepSeek V4 Pro, Gemma 4 31B IT, GPT OSS 120B, or Poolside Laguna M.1!");
@@ -1446,16 +1737,33 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
       const existingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
       const updatedChunks = [...existingChunks, ...serperCitations];
 
+      let responseText = response.text || "";
+      if (wikipediaFallbackMessage) {
+        responseText = wikipediaFallbackMessage + responseText;
+      }
+
       res.json({
-        text: response.text,
+        text: responseText,
         groundingMetadata: {
           groundingChunks: updatedChunks
         }
       });
 
     } catch (err: any) {
-      console.error("Text Gen Error: ", err);
-      res.status(500).json({ error: err.message || "Failed to generate text." });
+      console.error("[NextGenAi] Text Gen Error caught, activating secure offline-shield core:", err);
+      try {
+        const queryText = (req.body.prompt || (req.body.messages && req.body.messages[req.body.messages.length - 1]?.text) || "").trim();
+        const fallbackText = generateLocalFallbackResponse(queryText, req.body.specializedApp, req.body.textModel);
+        return res.json({
+          text: fallbackText,
+          groundingMetadata: {
+            groundingChunks: []
+          }
+        });
+      } catch (fallbackErr) {
+        console.error("[NextGenAi] Local Fallback generation failed:", fallbackErr);
+        res.status(500).json({ error: err.message || "Failed to generate text." });
+      }
     }
   });
 

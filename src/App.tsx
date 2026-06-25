@@ -153,6 +153,9 @@ export function ModelIcon({ modelId, className = "w-5 h-5" }: { modelId: string;
   } else if (normId.includes("poolside")) {
     emoji = "🏖️";
     styleClasses = "bg-cyan-50 dark:bg-cyan-950 border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-300";
+  } else if (normId.includes("wikipedia")) {
+    emoji = "📚";
+    styleClasses = "bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300";
   }
 
   // Determine relative text size based on className indicators
@@ -283,6 +286,15 @@ export const SPECIALIZED_APPS: SpecializedApp[] = [
 ];
 
 const TEXT_MODELS: TextModelConfig[] = [
+  {
+    id: "wikipedia-agent",
+    name: "Wikipedia Search",
+    avatar: "📚",
+    desc: "Always fetches live information from Wikipedia before answering",
+    series: "Wikipedia Knowledge Platform",
+    badge: "Live Search",
+    params: "Direct API • Real-time Summary"
+  },
   {
     id: "gemini-3.5-flash",
     name: "Gemini 3.5 Flash",
@@ -735,7 +747,9 @@ export default function App() {
 
   const [activeTextModel, setActiveTextModel] = useState<string>(() => {
     try {
-      return localStorage.getItem("nextgen_active_text_model") || "gemini-3.5-flash";
+      const stored = localStorage.getItem("nextgen_active_text_model");
+      if (stored === "gpt-5.5") return "openai/gpt-oss-120b";
+      return stored || "gemini-3.5-flash";
     } catch (_) {
       return "gemini-3.5-flash";
     }
@@ -1237,6 +1251,24 @@ export default function App() {
 
   // Copy success animation trigger
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+
+  const [softRedirectLink, setSoftRedirectLink] = useState<{ url: string; domain: string } | null>(null);
+
+  const handleSoftRedirect = (url: string) => {
+    try {
+      let domain = "External Website";
+      if (url.startsWith("http")) {
+        domain = new URL(url).hostname;
+      }
+      setSoftRedirectLink({ url, domain });
+      setTimeout(() => {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        setSoftRedirectLink(null);
+      }, 1500); // 1.5 seconds soft elegant redirect transition
+    } catch (e) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   // --- INITIAL COMPILER & MARKED SYSTEM INCLUSION ---
   useEffect(() => {
@@ -1860,7 +1892,7 @@ export default function App() {
   };
 
   // --- MASTER API STREAM DISPATCHER ---
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, modelOverride?: string) => {
     if (e) e.preventDefault();
     if (!input.trim() && !attachedImage) return;
 
@@ -1898,7 +1930,7 @@ export default function App() {
       } else if (isQueryingNews && !imageMode) {
         await triggerNewsRetrieval(userPrompt);
       } else {
-        await triggerTextGeneration(updatedMessages, userPrompt);
+        await triggerTextGeneration(updatedMessages, userPrompt, modelOverride);
       }
     } catch (err: any) {
       // Suppressed outer toast warnings per high security/quieter rate limits request
@@ -1954,7 +1986,7 @@ export default function App() {
   };
 
   // --- SERVER-SIDE FLOW: TEXT GENERATION & GROUNDING ---
-  const triggerTextGeneration = async (allMessages: Message[], originalPrompt: string) => {
+  const triggerTextGeneration = async (allMessages: Message[], originalPrompt: string, modelOverride?: string) => {
     try {
       setSearchStatusText(webSearchMode ? "Broadcasting live search signals..." : "Thinking...");
       
@@ -1962,7 +1994,7 @@ export default function App() {
         messages: allMessages,
         prompt: originalPrompt,
         webSearch: webSearchMode,
-        textModel: activeTextModel,
+        textModel: modelOverride || activeTextModel,
         specializedApp: activeSpecializedApp,
         customKeys: {
           nextGen: customNextGenKey,
@@ -2014,12 +2046,12 @@ export default function App() {
         }
       }
 
-      const activeModelConfig = TEXT_MODELS.find(m => m.id === activeTextModel);
+      const activeModelConfig = TEXT_MODELS.find(m => m.id === (modelOverride || activeTextModel));
       const assistantMsg: Message = {
         id: `model-${Date.now()}`,
         role: "model",
         text: textResult,
-        engineLabel: activeModelConfig ? activeModelConfig.name : activeTextModel || "NextGenAi Brain",
+        engineLabel: activeModelConfig ? activeModelConfig.name : (modelOverride || activeTextModel) || "NextGenAi Brain",
         timestamp: Date.now()
       };
 
@@ -2288,7 +2320,7 @@ export default function App() {
                <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                  <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
                </svg>
-               <span className="font-semibold">{activeTextModel === 'openai/gpt-oss-120b' ? 'GPT OSS 120B' : activeTextModel === 'openai/gpt-oss-safeguard-20b' ? 'GPT OSS Safeguard 20B' : activeTextModel === 'openai/gpt-oss-20b' ? 'GPT OSS 20B' : 'GPT-5.5'}</span>
+               <span className="font-semibold">{activeTextModel === 'openai/gpt-oss-120b' ? 'GPT OSS 120B' : activeTextModel === 'openai/gpt-oss-safeguard-20b' ? 'GPT OSS Safeguard 20B' : activeTextModel === 'openai/gpt-oss-20b' ? 'GPT OSS 20B' : 'GPT OSS 120B'}</span>
                <ChevronDown className="w-3.5 h-3.5 opacity-60" />
             </button>
             {isOpenaiMenuOpen && (
@@ -2298,12 +2330,6 @@ export default function App() {
                   : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
               }`}>
                 <div className="flex flex-col space-y-1">
-                  <button type="button" onClick={() => { setIsOpenaiMenuOpen(false); changeTextModel('gpt-5.5'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
-                    <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
-                    </svg>
-                    GPT-5.5
-                  </button>
                   <button type="button" onClick={() => { setIsOpenaiMenuOpen(false); changeTextModel('openai/gpt-oss-120b'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
                     <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                       <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
@@ -2419,6 +2445,7 @@ export default function App() {
               </div>
             )}
           </div>
+
           <div className="relative" ref={allMenuRef}>
             <button 
               type="button" 
@@ -2435,7 +2462,7 @@ export default function App() {
                   : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
               }`}>
                 <div className="flex flex-col space-y-1">
-                  {TEXT_MODELS.filter(m => !['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'google/gemma-4-31b-it', 'google/gemma-3n-e4b-it', 'google/paligemma', 'google/diffusiongemma-26b-a4b-it', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'openai/gpt-oss-safeguard-20b', 'deepseek-ai/deepseek-v4', 'deepseek-ai/deepseek-v4-pro', 'deepseek-ai/deepseek-v4-flash'].includes(m.id)).map(m => (
+                  {TEXT_MODELS.filter(m => !['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'google/gemma-4-31b-it', 'google/gemma-3n-e4b-it', 'google/paligemma', 'google/diffusiongemma-26b-a4b-it', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'openai/gpt-oss-safeguard-20b', 'deepseek-ai/deepseek-v4', 'deepseek-ai/deepseek-v4-pro', 'deepseek-ai/deepseek-v4-flash', 'wikipedia-agent'].includes(m.id)).map(m => (
                     <button key={m.id} type="button" onClick={() => { setIsAllMenuOpen(false); changeTextModel(m.id); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
                       <span className="text-base">{m.avatar}</span>
                       <span className="truncate">{m.name}</span>
@@ -2463,17 +2490,24 @@ export default function App() {
           {/* Top Bar with Tags */}
           <div className="flex items-center justify-between px-4 pt-3 pb-1 flex-wrap gap-2">
             <div className="flex items-center gap-2 text-xs">
-              <span className={`font-semibold ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-600'}`}>GPT-5.5:</span>
-              <span className="bg-orange-500 text-white px-2 py-0.5 rounded-md font-medium text-[10px] tracking-wide">New</span>
-              <span className={`px-2 py-0.5 rounded-md border text-[10px] ${theme === 'dark' ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>OpenAI</span>
-              <span className={`px-2 py-0.5 rounded-md border text-[10px] ${theme === 'dark' ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>Image and Video Recognition</span>
-              <span className={`px-2 py-0.5 rounded-md border text-[10px] ${theme === 'dark' ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>Mathematical Logic</span>
-            </div>
-            <div className="flex items-center gap-3 text-xs">
-              <span className="font-semibold text-pink-600 dark:text-pink-400">Up to <span className="font-bold">50% OFF</span></span>
-              <button type="button" className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-950 px-3 py-1 rounded-lg font-bold flex items-center gap-1 shadow-sm hover:opacity-90 transition-opacity">
-                <span>🚀</span> Upgrade
-              </button>
+              <span className={`font-semibold ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                {TEXT_MODELS.find(m => m.id === activeTextModel)?.name || activeTextModel}:
+              </span>
+              {TEXT_MODELS.find(m => m.id === activeTextModel)?.badge && (
+                <span className="bg-orange-500 text-white px-2 py-0.5 rounded-md font-medium text-[10px] tracking-wide">
+                  {TEXT_MODELS.find(m => m.id === activeTextModel)?.badge}
+                </span>
+              )}
+              {TEXT_MODELS.find(m => m.id === activeTextModel)?.series && (
+                <span className={`px-2 py-0.5 rounded-md border text-[10px] ${theme === 'dark' ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>
+                  {TEXT_MODELS.find(m => m.id === activeTextModel)?.series}
+                </span>
+              )}
+              {TEXT_MODELS.find(m => m.id === activeTextModel)?.params && (
+                <span className={`px-2 py-0.5 rounded-md border text-[10px] ${theme === 'dark' ? 'border-zinc-700 text-zinc-400' : 'border-zinc-200 text-zinc-500'}`}>
+                  {TEXT_MODELS.find(m => m.id === activeTextModel)?.params}
+                </span>
+              )}
             </div>
           </div>
 
@@ -2507,170 +2541,7 @@ export default function App() {
           <div className="flex items-center justify-between px-3 pb-3 pt-1">
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               
-              {/* Plus Button and Dropdown Popover */}
-              <div className="relative" ref={plusMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsPlusMenuOpen(!isPlusMenuOpen)}
-                  className={`p-2 rounded-full transition-all flex items-center justify-center ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}
-                  title="Tools and Models Menu"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
 
-                {/* Gemini style Dropdown Popup Overlay */}
-                {isPlusMenuOpen && (
-                  <div className={`absolute bottom-full left-0 mb-3 w-72 p-2.5 rounded-2.5xl border shadow-2xl animate-fade-in z-50 ${
-                    theme === "dark"
-                      ? "bg-[#1e1f22] border-[#2c2d30] text-zinc-100 shadow-black/95"
-                      : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-350/50"
-                  }`}>
-                    <div className="space-y-3 text-[13px] font-sans">
-                      
-                      {/* Section 2: Attach Local Files */}
-                      <div>
-                        <div className="px-2 pb-1.5 pt-1 border-b border-zinc-200/10 dark:border-zinc-800/20 flex items-center justify-between">
-                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🔗 File Attachment</span>
-                          <span className="text-[9px] font-mono opacity-40">multimodal</span>
-                        </div>
-                        <div className="space-y-1 mt-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsPlusMenuOpen(false);
-                              fileInputRef.current?.click();
-                            }}
-                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                              theme === "dark" 
-                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                            }`}
-                          >
-                            <span className="text-lg">🔗</span>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-xs truncate leading-tight">Attach Image / Graphic</p>
-                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Upload JPEG, PNG or WEBP (Max 5MB)</p>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Section 3: Flights Integration */}
-                      <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
-                        <div className="px-2 pb-1.5 flex items-center justify-between">
-                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">✈️ Flight Search</span>
-                          <span className="text-[9px] font-mono opacity-40">serpapi</span>
-                        </div>
-                        <div className="space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsPlusMenuOpen(false);
-                              setShowFlightsModal(true);
-                            }}
-                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                              theme === "dark" 
-                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                            }`}
-                          >
-                            <span className="text-lg">✈️</span>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-xs truncate leading-tight">Google Flights Search</p>
-                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Find live flight routing options</p>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Section 4: Shopping Integration */}
-                      <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
-                        <div className="px-2 pb-1.5 flex items-center justify-between">
-                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🛒 Shopping</span>
-                          <span className="text-[9px] font-mono opacity-40">serper</span>
-                        </div>
-                        <div className="space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsPlusMenuOpen(false);
-                              setShowShoppingModal(true);
-                            }}
-                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                              theme === "dark" 
-                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                            }`}
-                          >
-                            <span className="text-lg">🛒</span>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-xs truncate leading-tight">Google Shopping Search</p>
-                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Compare product prices & specs</p>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Section 5: Images Integration */}
-                      <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
-                        <div className="px-2 pb-1.5 flex items-center justify-between">
-                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🖼️ Images</span>
-                          <span className="text-[9px] font-mono opacity-40">serper</span>
-                        </div>
-                        <div className="space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsPlusMenuOpen(false);
-                              setShowImagesModal(true);
-                            }}
-                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                              theme === "dark" 
-                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                            }`}
-                          >
-                            <span className="text-lg">🖼️</span>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-xs truncate leading-tight">Google Images Search</p>
-                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Search millions of assets globally</p>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Section 6: Walmart Integration */}
-                      <div className="border-t border-zinc-200/5 dark:border-zinc-800/10 pt-2">
-                        <div className="px-2 pb-1.5 flex items-center justify-between">
-                          <span className="text-[10px] font-bold tracking-wider uppercase opacity-50">🏬 Walmart</span>
-                          <span className="text-[9px] font-mono opacity-40">serpapi</span>
-                        </div>
-                        <div className="space-y-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsPlusMenuOpen(false);
-                              setShowWalmartModal(true);
-                            }}
-                            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-                              theme === "dark" 
-                                ? "border-transparent hover:bg-zinc-800/50 text-zinc-350"
-                                : "border-transparent hover:bg-zinc-100 text-zinc-700"
-                            }`}
-                          >
-                            <span className="text-lg">🏬</span>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-bold text-xs truncate leading-tight">Walmart Product Search</p>
-                              <p className="text-[9px] opacity-60 truncate mt-0.5 leading-none">Search products & offers via SerpApi</p>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-                )}
-              </div>
 
               {/* Camera Button -> Maps to file input */}
               <button
@@ -2683,25 +2554,103 @@ export default function App() {
               </button>
 
               {/* Globe Search Button */}
-              <button type="button" onClick={() => showToastAlert("Search module not configured.")} className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-medium ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  changeTextModel('wikipedia-agent');
+                  if (!input.trim()) {
+                    showToastAlert("📚 Wikipedia Search selected. Type your query above and press Send!");
+                  } else {
+                    handleSendMessage(undefined, 'wikipedia-agent');
+                  }
+                }} 
+                className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${
+                  activeTextModel === 'wikipedia-agent'
+                    ? 'border border-purple-500 bg-purple-500/15 text-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.25)]'
+                    : theme === 'dark' 
+                      ? 'hover:bg-zinc-800 text-zinc-400' 
+                      : 'hover:bg-zinc-100 text-zinc-600'
+                }`}
+              >
                 <Globe className="w-4 h-4" />
                 <span>Search</span>
               </button>
 
               {/* My Prompts Button */}
-              <button type="button" onClick={() => showToastAlert("My Prompts module not configured.")} className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-medium ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (activeSpecializedApp === 'prompt-engineer') {
+                    setActiveSpecializedApp(null);
+                    localStorage.removeItem("nextgen_specialized_app");
+                    showToastAlert("✍️ Prompt Engineer deactivated.");
+                  } else {
+                    setActiveSpecializedApp('prompt-engineer');
+                    localStorage.setItem("nextgen_specialized_app", 'prompt-engineer');
+                    showToastAlert("✍️ Expert Prompt Engineer mode activated! Enter your ideas to optimize them.");
+                  }
+                }} 
+                className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${
+                  activeSpecializedApp === 'prompt-engineer'
+                    ? 'border border-sky-500 bg-sky-500/15 text-sky-400 shadow-[0_0_8px_rgba(14,165,233,0.25)]'
+                    : theme === 'dark' 
+                      ? 'hover:bg-zinc-800 text-zinc-400' 
+                      : 'hover:bg-zinc-100 text-zinc-600'
+                }`}
+              >
                 <FileText className="w-4 h-4" />
                 <span>My Prompts</span>
               </button>
 
               {/* Deep Research Button */}
-              <button type="button" onClick={() => showToastAlert("Deep Research module not configured.")} className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-medium ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (activeSpecializedApp === 'deep-research') {
+                    setActiveSpecializedApp(null);
+                    localStorage.removeItem("nextgen_specialized_app");
+                    showToastAlert("🔍 Deep Research deactivated.");
+                  } else {
+                    setActiveSpecializedApp('deep-research');
+                    localStorage.setItem("nextgen_specialized_app", 'deep-research');
+                    changeTextModel('openai/gpt-oss-120b');
+                    showToastAlert("🔍 Deep Research mode activated with GPT OSS 120B! Your queries will be thoroughly analyzed.");
+                  }
+                }} 
+                className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${
+                  activeSpecializedApp === 'deep-research'
+                    ? 'border border-violet-500 bg-violet-500/15 text-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.25)]'
+                    : theme === 'dark' 
+                      ? 'hover:bg-zinc-800 text-zinc-400' 
+                      : 'hover:bg-zinc-100 text-zinc-600'
+                }`}
+              >
                 <Telescope className="w-4 h-4" />
                 <span>Deep Research</span>
               </button>
 
               {/* Study Button */}
-              <button type="button" onClick={() => showToastAlert("Study module not configured.")} className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-medium ${theme === 'dark' ? 'hover:bg-zinc-800 text-zinc-400' : 'hover:bg-zinc-100 text-zinc-600'}`}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (activeSpecializedApp === 'scholarship-study-agent') {
+                    setActiveSpecializedApp(null);
+                    localStorage.removeItem("nextgen_specialized_app");
+                    showToastAlert("🎓 Scholarship Assistant deactivated.");
+                  } else {
+                    setActiveSpecializedApp('scholarship-study-agent');
+                    localStorage.setItem("nextgen_specialized_app", 'scholarship-study-agent');
+                    showToastAlert("🎓 AI Scholarship, Admission & Career Assistant activated! Ask any UG/PG scholarship or course query.");
+                  }
+                }} 
+                className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${
+                  activeSpecializedApp === 'scholarship-study-agent'
+                    ? 'border border-emerald-500 bg-emerald-500/15 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.25)]'
+                    : theme === 'dark' 
+                      ? 'hover:bg-zinc-800 text-zinc-400' 
+                      : 'hover:bg-zinc-100 text-zinc-600'
+                }`}
+              >
                 <GraduationCap className="w-4 h-4" />
                 <span>Study</span>
               </button>
@@ -2710,18 +2659,18 @@ export default function App() {
             <div className="flex items-center gap-3 shrink-0">
               <span className={`text-xs font-medium ${theme === 'dark' ? 'text-zinc-500' : 'text-zinc-400'}`}>2/3</span>
               
-              <button
-                type="button"
-                onClick={toggleMicrophone}
-                className={`p-2 rounded-full transition-all flex items-center justify-center ${
-                  isMicListening 
-                    ? "bg-red-500 text-white animate-pulse" 
-                    : (theme === "dark" ? "text-zinc-400 hover:text-white hover:bg-zinc-800" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100")
-                }`}
-                title="Start Voice dictation transcription"
-              >
-                {isMicListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              </button>
+              {!isMicListening && (
+                <button
+                  type="button"
+                  onClick={toggleMicrophone}
+                  className={`p-2 rounded-full transition-all flex items-center justify-center ${
+                    theme === "dark" ? "text-zinc-400 hover:text-white hover:bg-zinc-800" : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100"
+                  }`}
+                  title="Start Voice dictation transcription"
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+              )}
 
               <button
                 type="submit"
@@ -3063,6 +3012,8 @@ export default function App() {
             )}
           </div>
 
+
+
         </div>
 
         {/* BOTTOM UTILITY RAILS PART */}
@@ -3144,6 +3095,22 @@ export default function App() {
                 {!isSidebarCollapsed && <span className="animate-fade-in font-bold tracking-[0.15em] uppercase text-[10px] text-blue-700 dark:text-blue-400">SIGN IN</span>}
               </button>
             )}
+          </div>
+
+          {/* SOCIAL LINKS */}
+          <div className={`mt-2 pt-3 flex flex-wrap items-center justify-center gap-4 ${isSidebarCollapsed ? "flex-col" : "flex-row"} text-zinc-400 dark:text-zinc-500`}>
+            <a href="mailto:nextgenaiworflow@protonmail.com" className="hover:text-blue-500 transition-colors" title="Gmail" target="_blank" rel="noopener noreferrer">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            </a>
+            <a href="https://www.instagram.com/abhi_23510" className="hover:text-pink-500 transition-colors" title="Instagram" target="_blank" rel="noopener noreferrer">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+            </a>
+            <a href="https://x.com/GenNextAi" className="hover:text-zinc-900 dark:hover:text-white transition-colors" title="X (Twitter)" target="_blank" rel="noopener noreferrer">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="#" className="hover:text-orange-500 transition-colors" title="Reddit">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.56 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.562-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.688-.561-1.249-1.249-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+            </a>
           </div>
 
         </div>
@@ -3309,102 +3276,12 @@ export default function App() {
             </button>
           )}
 
-          {/* FIREBASE AUTH PROFILE OR LOGIN DROPDOWN */}
-          <div className="relative" ref={profileDropdownRef}>
-            {user ? (
-              // Authenticated user state
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                  className={`flex items-center gap-1.5 p-1 pl-2 pr-1 rounded-full border transition-all ${
-                    theme === "dark" 
-                      ? "border-zinc-800 hover:bg-zinc-800/80 bg-zinc-900/40 text-zinc-200" 
-                      : "border-zinc-200 hover:bg-zinc-100 bg-zinc-50 text-zinc-700"
-                  }`}
-                  aria-label="User menu"
-                >
-                  <span className="text-xs font-medium max-w-[100px] truncate hidden sm:inline-block">
-                    {user.displayName || user.email?.split("@")[0] || "User"}
-                  </span>
-                  {user.photoURL ? (
-                    <img 
-                      src={user.photoURL} 
-                      alt="Google Avatar" 
-                      referrerPolicy="no-referrer"
-                      className="w-7 h-7 rounded-full object-cover border border-blue-500/30"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-white flex items-center justify-center font-bold text-[10px] uppercase border border-blue-400/20">
-                      {user.email?.charAt(0) || "U"}
-                    </div>
-                  )}
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showProfileDropdown ? "rotate-180" : ""}`} />
-                </button>
 
-                {/* Dropdown Card */}
-                {showProfileDropdown && (
-                  <div className={`absolute right-0 mt-2.5 w-64 rounded-2xl border p-4 shadow-xl animate-fade-in z-50 ${
-                    theme === "dark"
-                      ? "bg-zinc-950 border-zinc-805 text-zinc-100 shadow-black/80"
-                      : "bg-white border-zinc-250 text-zinc-800 shadow-zinc-200"
-                  }`}>
-                    <div className="flex flex-col items-center text-center pb-3 border-b border-zinc-200/40 dark:border-zinc-800/60">
-                      {user.photoURL ? (
-                        <img 
-                          src={user.photoURL} 
-                          alt="Avatar" 
-                          referrerPolicy="no-referrer"
-                          className="w-14 h-14 rounded-full object-cover mb-2 ring-2 ring-blue-500/20"
-                        />
-                      ) : (
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 text-white flex items-center justify-center font-bold text-xl uppercase mb-2">
-                          {user.email?.charAt(0) || "U"}
-                        </div>
-                      )}
-                      <p className="font-semibold text-sm max-w-[220px] truncate">
-                        {user.displayName || "NextGen User"}
-                      </p>
-                      <p className="text-xs opacity-60 truncate max-w-[220px] mt-0.5">
-                        {user.email}
-                      </p>
-                      <span className="inline-block mt-2 text-[9px] font-bold px-2.5 py-0.5 rounded-full border border-blue-500/20 text-blue-400 bg-blue-500/5 uppercase tracking-wider">
-                        {user.providerData[0]?.providerId === "google.com" ? "Google Account" : user.providerData[0]?.providerId === "facebook.com" ? "Facebook Account" : user.providerData[0]?.providerId === "apple.com" ? "Apple Account" : "Email sandbox"}
-                      </span>
-                    </div>
-
-                    <div className="pt-3">
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors text-left font-sans cursor-pointer"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Log out account
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // Unauthenticated visitor state (Gemini styled login)
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthError(null);
-                  setShowAuthModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black leading-none bg-[#111] dark:bg-white text-white dark:text-zinc-900 border border-zinc-800 dark:border-white/90 hover:bg-zinc-900 dark:hover:bg-zinc-100 transition-all shadow-md transform hover:-translate-y-0.5 cursor-pointer"
-              >
-                <LogIn className="w-3.5 h-3.5 stroke-[2.5]" />
-                Sign In
-              </button>
-            )}
-          </div>
         </div>
       </header>
 
       {/* --- SCROLL CONTAINED MESSAGE CONTAINER --- */}
-      <main className="relative flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 py-8 w-full max-w-full mx-auto flex flex-col justify-between rounded-3xl border border-zinc-200/50 dark:border-zinc-800/50 m-2 outline-none">
+      <main className="relative flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 py-8 w-full max-w-full mx-auto flex flex-col justify-between rounded-3xl border-none m-2 outline-none">
         
         {messages.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none z-0">
@@ -3547,6 +3424,17 @@ export default function App() {
                             : (theme === "dark" ? "text-zinc-200" : "text-zinc-850")
                         }`}
                         dangerouslySetInnerHTML={formatMarkdownToHTML(msg.text)}
+                        onClick={(e) => {
+                          const target = e.target as HTMLElement;
+                          const anchor = target.closest("a");
+                          if (anchor) {
+                            const href = anchor.getAttribute("href");
+                            if (href && !href.startsWith("#") && !href.startsWith("mailto:")) {
+                              e.preventDefault();
+                              handleSoftRedirect(href);
+                            }
+                          }
+                        }}
                       />
 
                       {/* Model intelligence source attribution under standard text message response */}
@@ -3746,23 +3634,85 @@ export default function App() {
         </div>
       </main>
 
-      {/* Voice active overlay container */}
+      {/* Voice active Gemini-style Waveform Container */}
       {isMicListening && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 max-w-md w-11/12 bg-red-950/90 border border-red-500/35 p-3.5 rounded-2xl shadow-2xl flex items-center justify-between text-xs text-red-100 font-bold animate-pulse backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
-            <p className="font-display tracking-wide uppercase text-red-300">Continuous Microphone Input Active</p>
+        <div 
+          onClick={toggleMicrophone}
+          className="fixed bottom-28 left-1/2 -translate-x-1/2 z-30 max-w-sm w-10/12 bg-zinc-950/90 hover:bg-zinc-900/95 border border-zinc-800/80 p-5 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center gap-3.5 cursor-pointer animate-fade-in backdrop-blur-xl transition-all hover:scale-[1.02] select-none group"
+          title="Click to Stop Listening"
+        >
+          {/* Wave animation row */}
+          <div className="flex items-center justify-center gap-1.5 h-12 px-6 w-full">
+            {[
+              { color: "bg-blue-400 dark:bg-blue-400", delay: "0s", height: "h-6" },
+              { color: "bg-cyan-400 dark:bg-cyan-400", delay: "-0.2s", height: "h-10" },
+              { color: "bg-indigo-400 dark:bg-indigo-400", delay: "-0.4s", height: "h-8" },
+              { color: "bg-purple-400 dark:bg-purple-400", delay: "-0.1s", height: "h-12" },
+              { color: "bg-pink-400 dark:bg-pink-400", delay: "-0.3s", height: "h-7" },
+              { color: "bg-violet-400 dark:bg-violet-400", delay: "-0.5s", height: "h-11" },
+              { color: "bg-teal-400 dark:bg-teal-400", delay: "-0.25s", height: "h-9" },
+              { color: "bg-cyan-300 dark:bg-cyan-300", delay: "-0.45s", height: "h-12" },
+              { color: "bg-purple-500 dark:bg-purple-500", delay: "-0.15s", height: "h-6" },
+              { color: "bg-pink-500 dark:bg-pink-500", delay: "-0.35s", height: "h-10" },
+            ].map((bar, idx) => (
+              <span
+                key={idx}
+                className={`w-1 rounded-full animate-gemini-wave ${bar.color} ${bar.height}`}
+                style={{
+                  animationDelay: bar.delay,
+                  animationDuration: "1.2s"
+                }}
+              />
+            ))}
           </div>
-          <button 
-            type="button" 
-            onClick={() => {
-              if (recognitionRef.current) recognitionRef.current.stop();
-              setIsMicListening(false);
-            }} 
-            className="text-red-400 hover:text-white px-2.5 py-1 rounded-lg bg-red-900/30"
-          >
-            Mute
-          </button>
+
+          <div className="text-center">
+            <p className="text-xs font-semibold tracking-wide text-zinc-300 group-hover:text-zinc-100 transition-colors flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Listening to voice input...
+            </p>
+            <p className="text-[10px] text-zinc-500 group-hover:text-zinc-400 mt-1">
+              Tap anywhere on this panel to Stop & Transcribe
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Soft Redirect Overlay */}
+      {softRedirectLink && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xl z-50 flex flex-col items-center justify-center animate-fade-in">
+          <div className="relative max-w-sm w-11/12 p-8 rounded-3xl bg-zinc-900 border border-zinc-800 text-center shadow-[0_25px_60px_rgba(0,0,0,0.8)] space-y-6">
+            
+            {/* Soft Glowing Radar Icon */}
+            <div className="relative mx-auto w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/20 shadow-[0_0_40px_rgba(59,130,246,0.15)] animate-pulse">
+              <div className="absolute inset-0 rounded-full border border-blue-500/10 animate-ping" style={{ animationDuration: "3s" }} />
+              <div className="absolute inset-2 rounded-full border border-blue-400/20 animate-ping" style={{ animationDuration: "2s" }} />
+              <Globe className="w-10 h-10 text-blue-400 animate-spin" style={{ animationDuration: "10s" }} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-zinc-100 tracking-tight flex items-center justify-center gap-1.5">
+                Connecting Softly <ExternalLink className="w-4 h-4 text-blue-400" />
+              </h3>
+              <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
+                You are transitioning to an external resource safely. Securely handshaking with:
+              </p>
+              <div className="bg-zinc-950 px-4 py-2 rounded-xl border border-zinc-850 font-mono text-sm text-blue-400 select-all truncate mt-2">
+                {softRedirectLink.domain}
+              </div>
+            </div>
+
+            {/* Custom elegant infinite transition line loader */}
+            <div className="relative w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full animate-pulse w-full" style={{
+                animationDuration: "1.2s"
+              }} />
+            </div>
+
+            <p className="text-[10px] text-zinc-500 animate-pulse">
+              Please wait while your browser loads the destination page...
+            </p>
+          </div>
         </div>
       )}
 
