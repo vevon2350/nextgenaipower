@@ -1,7 +1,6 @@
 import express from "express";
 import OpenAI from "openai";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import helmet from "helmet";
@@ -933,6 +932,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
         textModel.includes("bytedance/seed-oss-36b-instruct") ||
         textModel.includes("openai/gpt-oss-120b") ||
         textModel.includes("openai/gpt-oss-20b") ||
+        textModel.includes("openai/gpt-oss-safeguard-20b") ||
         textModel.includes("microsoft/phi-4-mini-instruct") ||
         textModel.includes("upstage/solar-10.7b-instruct")
       );
@@ -2550,6 +2550,8 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     // In dev mode, attach the Vite dev server to Express as intermediate middleware
+    const vitePkg = "vite";
+    const { createServer: createViteServer } = await import(vitePkg);
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
