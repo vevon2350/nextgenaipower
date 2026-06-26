@@ -1,5 +1,5 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src=" https://cdn.corenexis.com/f/A7WHo5ALnfj.png" />
+<img width="1200" height="475" alt="GHBanner" src="https://cdn.corenexis.com/f/lWiihFujV9b.png" />
 </div>
 
 # Run and deploy your AI Studio app
