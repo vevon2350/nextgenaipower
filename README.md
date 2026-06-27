@@ -6,7 +6,7 @@
 
 This contains everything you need to run your app locally.
 
-View your app in AI Studio: https://ai.studio/apps/4900ed4a-0b07-4aa1-b623-df0439c4b1cc
+View your app in AI Studio:  https://nextgen-ai.website
 
 ## Run Locally
 
