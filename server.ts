@@ -1213,9 +1213,7 @@ To achieve optimal results in this domain:
 
 1. **NextGen Engineering की विशेषता**: मैं पूर्ण रूप से सुरक्षित और उत्तरदायी प्रणाली का उपयोग करता हूँ। आपके द्वारा पूछे गए प्रश्न का समाधान करने के लिए यहाँ मुख्य बातें दी गई हैं।
 2. **सटीक मार्गदर्शन**: आपके कार्य या प्रश्न को सरल, स्पष्ट और व्यावहारिक रूप से समझने के लिए आप मुझे अधिक विवरण दे सकते हैं।
-3. **भरोसेमंद सिस्टम**: यदि आपको किसी विशिष्ट विषय (जैसे कोडिंग, गणित, या सामान्य ज्ञान) पर विस्तृत जानकारी चाहिए, तो कृपया पूछें। मैं बिना किसी एरर के आपकी पूरी मदद करूँगा।
-
-आप चाहें तो नीचे **Settings** में जाकर अपनी स्वयं की **API Key** भी जोड़ सकते हैं, जिससे आप सीधे प्रीमियम एंटरप्राइज सर्वर्स से जुड़ सकते हैं!`;
+3. **भरोसेमंद सिस्टम**: यदि आपको किसी विशिष्ट विषय (जैसे कोडिंग, गणित, या सामान्य ज्ञान) पर विस्तृत जानकारी चाहिए, तो कृपया पूछें। मैं बिना किसी एरर के आपकी पूरी मदद करूँगा।`;
     }
 
     return header + `Hello! I am NextGenAi, your highly sophisticated digital assistant.
@@ -1228,10 +1226,6 @@ To keep your session entirely seamless, I have automatically routed your request
    - For **"${cleanQuery}"**, we recommend structuring your development or research in a highly modular fashion.
    - Always verify that environment files (\`.env.example\`) are accurately documented and that secret credentials are never committed directly to client-side components.
    - Make sure your UI layouts feature elegant typography like *Inter* or *Space Grotesk* and generous negative spacing for high-density visibility.
-
-2. **How to resolve rate limits**:
-   - If you have your own API credentials, click the **Settings Gear** icon in the bottom corner of this panel to add your own **Gemini API Key**, **OpenAI API Key**, or **OpenRouter API Key**.
-   - Doing so will immediately unlock unlimited direct, high-speed premium connections directly to those enterprise AI models!
 
 Please let me know if you would like me to assist you with further structured code templates, website wireframes, content outlines, or scholarship guidance!`;
   }
