@@ -37,7 +37,45 @@ import {
   GraduationCap,
   ArrowUp,
   Bot,
-  Users
+  Users,
+  Terminal,
+  Database,
+  Landmark,
+  Coins,
+  Gamepad2,
+  MapPin,
+  Radio,
+  Bus,
+  Music,
+  Image,
+  Share2,
+  Dumbbell,
+  CloudSun,
+  ShoppingBag,
+  Utensils,
+  HeartPulse,
+  Calendar,
+  Building2,
+  Video,
+  FlaskConical,
+  Briefcase,
+  PawPrint,
+  Cpu,
+  Cloud,
+  BarChart3,
+  Tv,
+  Book,
+  Newspaper,
+  Link2,
+  Paintbrush,
+  Wifi,
+  Leaf,
+  Building,
+  Car,
+  Smile,
+  FileSearch,
+  RefreshCw,
+  Wrench
 } from "lucide-react";
 import { 
   onAuthStateChanged, 
@@ -285,6 +323,313 @@ export const SPECIALIZED_APPS: SpecializedApp[] = [
   }
 ];
 
+export interface SidebarCategory {
+  id: string;
+  name: string;
+  iconName: string;
+  desc: string;
+}
+
+export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
+  {
+    id: "development",
+    name: "Development",
+    iconName: "Terminal",
+    desc: "Expert coding, software architecture, debugging, algorithms, and full-stack solutions."
+  },
+  {
+    id: "data-access",
+    name: "Data Access",
+    iconName: "Database",
+    desc: "Database design, indexing, advanced SQL queries, ORM patterns, and secure APIs."
+  },
+  {
+    id: "finance",
+    name: "Finance",
+    iconName: "Landmark",
+    desc: "Financial analytics, market trends, smart budgeting, portfolio tracking, and business strategies."
+  },
+  {
+    id: "cryptocurrency",
+    name: "Cryptocurrency",
+    iconName: "Coins",
+    desc: "Blockchain architecture, smart contracts, DeFi tokens, mining economics, and Web3 apps."
+  },
+  {
+    id: "games-comics",
+    name: "Games & Comics",
+    iconName: "Gamepad2",
+    desc: "Interactive game mechanics, level design, character storyboards, lore, and visual narratives."
+  },
+  {
+    id: "geocoding",
+    name: "Geocoding",
+    iconName: "MapPin",
+    desc: "Spatial analysis, coordinates, distance matrices, routing, mapping APIs, and GIS."
+  },
+  {
+    id: "open-data",
+    name: "Open Data",
+    iconName: "Radio",
+    desc: "Public datasets, public catalogs, sensor arrays, real-time broadcasts, and telemetry."
+  },
+  {
+    id: "transportation",
+    name: "Transportation",
+    iconName: "Bus",
+    desc: "Logistics systems, route optimizations, public transport timetables, and traffic routing."
+  },
+  {
+    id: "music",
+    name: "Music",
+    iconName: "Music",
+    desc: "Music theory, chord progressions, lyric sheets, sound synthesis, and digital audio workstation tips."
+  },
+  {
+    id: "media",
+    name: "Media",
+    iconName: "Image",
+    desc: "Image metadata, video production workflows, digital canvas assets, and graphic elements."
+  },
+  {
+    id: "social",
+    name: "Social",
+    iconName: "Share2",
+    desc: "Social network graphing, digital identity, community building, and content distribution networks."
+  },
+  {
+    id: "sports-fitness",
+    name: "Sports & Fitness",
+    iconName: "Dumbbell",
+    desc: "Performance statistics, exercise regimens, caloric tracking, and team athletics coordination."
+  },
+  {
+    id: "weather",
+    name: "Weather",
+    iconName: "CloudSun",
+    desc: "Meteorological forecasting, climate analytics, atmospheric pressure models, and radar imaging."
+  },
+  {
+    id: "shopping",
+    name: "Shopping",
+    iconName: "ShoppingBag",
+    desc: "E-commerce logistics, cart optimization, payment security, and retail customer trends."
+  },
+  {
+    id: "food-drink",
+    name: "Food & Drink",
+    iconName: "Utensils",
+    desc: "Culinary chemistry, diet plan generation, beverage cellaring, and restaurant analytics."
+  },
+  {
+    id: "health",
+    name: "Health",
+    iconName: "HeartPulse",
+    desc: "Biomedical informatics, wellness insights, preventive habits, and diagnostic modeling."
+  },
+  {
+    id: "calendar",
+    name: "Calendar",
+    iconName: "Calendar",
+    desc: "Schedules synchronization, event orchestration, time blocking, and deadline reminders."
+  },
+  {
+    id: "government",
+    name: "Government",
+    iconName: "Building2",
+    desc: "Public policy, legal drafting frameworks, civil registries, and community programs."
+  },
+  {
+    id: "video",
+    name: "Video",
+    iconName: "Video",
+    desc: "Streaming protocols, video compression codecs, editing techniques, and visual composition."
+  },
+  {
+    id: "science",
+    name: "Science",
+    iconName: "FlaskConical",
+    desc: "Scientific research protocols, hypothesis testing, physics modeling, and laboratory simulations."
+  },
+  {
+    id: "jobs",
+    name: "Jobs",
+    iconName: "Briefcase",
+    desc: "Career progression, resume formatting, applicant tracking systems, and interview practice."
+  },
+  {
+    id: "animals",
+    name: "Animals",
+    iconName: "PawPrint",
+    desc: "Veterinary taxonomy, biological studies, pet behavior tracking, and habitat ecology."
+  },
+  {
+    id: "machine-learning",
+    name: "Machine Learning",
+    iconName: "Cpu",
+    desc: "Neural network training, weights evaluation, automated preprocessing, and hyperparameter tuning."
+  },
+  {
+    id: "documents-productivity",
+    name: "Documents & Productivity",
+    iconName: "FileText",
+    desc: "Office suites integration, keyboard shortcuts optimization, PDF analytics, and formatting."
+  },
+  {
+    id: "cloud-storage",
+    name: "Cloud Storage",
+    iconName: "Cloud",
+    desc: "File synchronizations, secure storage keys, remote backup patterns, and folder hierarchy."
+  },
+  {
+    id: "security",
+    name: "Security",
+    iconName: "Shield",
+    desc: "Threat mitigations, safe encryption handshakes, penetration analysis, and secure login gates."
+  },
+  {
+    id: "analytics",
+    name: "Analytics",
+    iconName: "BarChart3",
+    desc: "Business intelligence datasets, performance funnels, real-time logging, and dashboard widgets."
+  },
+  {
+    id: "anime",
+    name: "Anime",
+    iconName: "Tv",
+    desc: "Cultural studies, animation styles cataloging, screenplay pacing, and fandom demographics."
+  },
+  {
+    id: "dictionaries",
+    name: "Dictionaries",
+    iconName: "Book",
+    desc: "Lexicon indices, translation cross-referencing, word etymology, and pronunciation models."
+  },
+  {
+    id: "news",
+    name: "News",
+    iconName: "Newspaper",
+    desc: "Global journalism monitoring, press wires sorting, media bias checking, and headline alerts."
+  },
+  {
+    id: "url-shorteners",
+    name: "URL Shorteners",
+    iconName: "Link2",
+    desc: "Link redirection structures, custom click telemetry, and safe site validations."
+  },
+  {
+    id: "art-design",
+    name: "Art & Design",
+    iconName: "Paintbrush",
+    desc: "Creative palettes, layout composition rules, typographic pairing systems, and sketching."
+  },
+  {
+    id: "iot",
+    name: "IoT",
+    iconName: "Wifi",
+    desc: "Embedded sensors mesh, edge computing logic, smart home protocols, and telemetry."
+  },
+  {
+    id: "environment",
+    name: "Environment",
+    iconName: "Leaf",
+    desc: "Conservation data, weather correlation modeling, carbon offset logs, and eco-systems study."
+  },
+  {
+    id: "business",
+    name: "Business",
+    iconName: "Building",
+    desc: "Corporate management, resource allocation charts, safe investment outlines, and partnerships."
+  },
+  {
+    id: "books",
+    name: "Books",
+    iconName: "BookOpen",
+    desc: "Literature library catalog, character relationship graphs, speed reading guides, and reviews."
+  },
+  {
+    id: "vehicle",
+    name: "Vehicle",
+    iconName: "Car",
+    desc: "Automotive schematics, maintenance schedules, safe driving assists, and electric motor data."
+  },
+  {
+    id: "personality",
+    name: "Personality",
+    iconName: "Smile",
+    desc: "Cognitive styles assessment, psychological profiling models, and safe wellness strategies."
+  },
+  {
+    id: "text-analysis",
+    name: "Text Analysis",
+    iconName: "FileSearch",
+    desc: "Grammatical syntax trees, sentiment evaluation matrices, and text summarize generators."
+  },
+  {
+    id: "currency-exchange",
+    name: "Currency Exchange",
+    iconName: "RefreshCw",
+    desc: "Live foreign exchange rates, conversion analytics, inflation correlation, and cash sheets."
+  },
+  {
+    id: "photography",
+    name: "Photography",
+    iconName: "Camera",
+    desc: "Aperture ratios, camera exposure calculators, focal length profiles, and digital raw editing."
+  },
+  {
+    id: "utilities",
+    name: "Utilities",
+    iconName: "Wrench",
+    desc: "Calculation engines, custom script runners, units conversions, and local offline-shield aids."
+  }
+];
+
+export const WORKSPACE_MODELS: Record<string, { modelId: string; modelName: string }> = {
+  development: { modelId: "glm-5.1", modelName: "GLM-5.1" },
+  "data-access": { modelId: "openai/gpt-oss-120b", modelName: "GPT OSS 120B" },
+  finance: { modelId: "stockmark/stockmark-2-100b-instruct", modelName: "Stockmark 2 100B" },
+  cryptocurrency: { modelId: "deepseek-ai/deepseek-v4", modelName: "DeepSeek V4" },
+  "games-comics": { modelId: "bytedance/seed-oss-36b-instruct", modelName: "Seed OSS 36B" },
+  geocoding: { modelId: "upstage/solar-10.7b-instruct", modelName: "Solar 10.7B" },
+  "open-data": { modelId: "stepfun-ai/step-3.7-flash", modelName: "Step 3.7 Flash" },
+  transportation: { modelId: "qwen/qwen3.5-122b-a10b", modelName: "Qwen 3.5 122B" },
+  music: { modelId: "google/gemma-4-31b-it", modelName: "Gemma 4 31B" },
+  media: { modelId: "google/paligemma", modelName: "PaliGemma Vision" },
+  social: { modelId: "meta/llama-3.1-405b", modelName: "Llama 3.1 405B" },
+  "sports-fitness": { modelId: "nike/sport-coach-8b", modelName: "Nike SportCoach 8B" },
+  weather: { modelId: "noaa/weather-predict-50b", modelName: "NOAA Predict 50B" },
+  shopping: { modelId: "amazon/retail-insight-70b", modelName: "Amazon RetailInsight 70B" },
+  "food-drink": { modelId: "recipe/culinary-expert-13b", modelName: "CulinaryExpert 13B" },
+  health: { modelId: "bio/med-llama-3-70b", modelName: "Med-Llama 3 70B" },
+  calendar: { modelId: "cron/schedule-optimizer-8b", modelName: "ScheduleOptimizer 8B" },
+  government: { modelId: "legal/civic-legislator-33b", modelName: "CivicLegislator 33B" },
+  video: { modelId: "runway/gen3-video-prompt", modelName: "Runway Gen3 Helper" },
+  science: { modelId: "galactica/science-120b", modelName: "Galactica Science 120B" },
+  jobs: { modelId: "career/resume-booster-11b", modelName: "ResumeBooster 11B" },
+  animals: { modelId: "nature/fauna-identifier-8b", modelName: "FaunaIdentifier 8B" },
+  "machine-learning": { modelId: "deepmind/alphafold-text-33b", modelName: "AlphaFold Text 33B" },
+  "documents-productivity": { modelId: "office/docuglide-20b", modelName: "DocuGlide 20B" },
+  "cloud-storage": { modelId: "cloud/storage-copilot-15b", modelName: "StorageCopilot 15B" },
+  security: { modelId: "cyber/sec-guard-70b", modelName: "SecGuard Cyber 70B" },
+  analytics: { modelId: "tableau/data-analyst-80b", modelName: "Tableau DataAnalyst 80B" },
+  anime: { modelId: "otaku/mangachip-13b", modelName: "MangaChip 13B" },
+  dictionaries: { modelId: "oxford/lexicon-pro-33b", modelName: "LexiconPro 33B" },
+  news: { modelId: "reuters/wire-composer-20b", modelName: "WireComposer 20B" },
+  "url-shorteners": { modelId: "link/tiny-redirect-8b", modelName: "TinyRedirect 8B" },
+  "art-design": { modelId: "adobe/palette-painter-30b", modelName: "PalettePainter 30B" },
+  iot: { modelId: "edge/iot-controller-8b", modelName: "IoT Controller 8B" },
+  environment: { modelId: "climate/eco-advisor-33b", modelName: "EcoAdvisor 33B" },
+  business: { modelId: "mckinsey/strategy-pro-70b", modelName: "StrategyPro 70B" },
+  books: { modelId: "library/lit-explorer-33b", modelName: "LitExplorer 33B" },
+  vehicle: { modelId: "auto/drive-assist-50b", modelName: "DriveAssist 50B" },
+  personality: { modelId: "mbti/profiler-expert-13b", modelName: "MBTI Profiler 13B" },
+  "text-analysis": { modelId: "linguistic/syntax-tree-33b", modelName: "SyntaxTree 33B" },
+  "currency-exchange": { modelId: "forex/rate-analyst-15b", modelName: "Forex RateAnalyst 15B" },
+  photography: { modelId: "lens/exposure-master-11b", modelName: "ExposureMaster 11B" },
+  utilities: { modelId: "tool/utility-runner-8b", modelName: "UtilityRunner 8B" }
+};
+
 const TEXT_MODELS: TextModelConfig[] = [
   {
     id: "wikipedia-agent",
@@ -303,6 +648,15 @@ const TEXT_MODELS: TextModelConfig[] = [
     series: "Google Gemini Series",
     badge: "Recommended",
     params: "Multimodal • Ultra-Low Latency"
+  },
+  {
+    id: "glm-5.1",
+    name: "GLM-5.1",
+    avatar: "🤖",
+    desc: "Zhipu General Language Model 5.1 for expert coding and development reasoning",
+    series: "GLM Foundation Series",
+    badge: "Elite Dev Engine",
+    params: "Advanced Logic • Code Generation"
   },
   {
     id: "gemini-3.1-flash-lite",
@@ -384,6 +738,15 @@ const TEXT_MODELS: TextModelConfig[] = [
     series: "DeepSeek Intelligence",
     badge: "Flash State",
     params: "NVIDIA-accelerated"
+  },
+  {
+    id: "gpt-5.5",
+    name: "GPT-5.5",
+    avatar: "🌀",
+    desc: "Next-generation model for complex reasoning and mathematical logic",
+    series: "OpenAI Foundation",
+    badge: "New",
+    params: "Mathematical Logic"
   },
   {
     id: "openai/gpt-oss-120b",
@@ -567,6 +930,95 @@ interface Message {
   timestamp: number;
 }
 
+export function renderCategoryIcon(iconName: string, className = "w-5 h-5") {
+  switch (iconName) {
+    case "Terminal":
+      return <Terminal className={className} />;
+    case "Database":
+      return <Database className={className} />;
+    case "Landmark":
+      return <Landmark className={className} />;
+    case "Coins":
+      return <Coins className={className} />;
+    case "Gamepad2":
+      return <Gamepad2 className={className} />;
+    case "MapPin":
+      return <MapPin className={className} />;
+    case "Radio":
+      return <Radio className={className} />;
+    case "Bus":
+      return <Bus className={className} />;
+    case "Music":
+      return <Music className={className} />;
+    case "Image":
+      return <Image className={className} />;
+    case "Share2":
+      return <Share2 className={className} />;
+    case "Dumbbell":
+      return <Dumbbell className={className} />;
+    case "CloudSun":
+      return <CloudSun className={className} />;
+    case "ShoppingBag":
+      return <ShoppingBag className={className} />;
+    case "Utensils":
+      return <Utensils className={className} />;
+    case "HeartPulse":
+      return <HeartPulse className={className} />;
+    case "Calendar":
+      return <Calendar className={className} />;
+    case "Building2":
+      return <Building2 className={className} />;
+    case "Video":
+      return <Video className={className} />;
+    case "FlaskConical":
+      return <FlaskConical className={className} />;
+    case "Briefcase":
+      return <Briefcase className={className} />;
+    case "PawPrint":
+      return <PawPrint className={className} />;
+    case "Cpu":
+      return <Cpu className={className} />;
+    case "Cloud":
+      return <Cloud className={className} />;
+    case "Shield":
+      return <Shield className={className} />;
+    case "BarChart3":
+      return <BarChart3 className={className} />;
+    case "Tv":
+      return <Tv className={className} />;
+    case "Book":
+      return <Book className={className} />;
+    case "Newspaper":
+      return <Newspaper className={className} />;
+    case "Link2":
+      return <Link2 className={className} />;
+    case "Paintbrush":
+      return <Paintbrush className={className} />;
+    case "Wifi":
+      return <Wifi className={className} />;
+    case "Leaf":
+      return <Leaf className={className} />;
+    case "Building":
+      return <Building className={className} />;
+    case "BookOpen":
+      return <BookOpen className={className} />;
+    case "Car":
+      return <Car className={className} />;
+    case "Smile":
+      return <Smile className={className} />;
+    case "FileSearch":
+      return <FileSearch className={className} />;
+    case "RefreshCw":
+      return <RefreshCw className={className} />;
+    case "Camera":
+      return <Camera className={className} />;
+    case "Wrench":
+      return <Wrench className={className} />;
+    default:
+      return <Bot className={className} />;
+  }
+}
+
 export default function App() {
   // --- CLIENT STATES ---
   const [messages, setMessages] = useState<Message[]>([]);
@@ -575,6 +1027,11 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showAllSidebar, setShowAllSidebar] = useState(false);
+  const [showAllWelcome, setShowAllWelcome] = useState(false);
+  const [showAiWorkingPopup, setShowAiWorkingPopup] = useState(false);
+  const [aiWorkingState, setAiWorkingState] = useState<"initializing" | "optimizing" | "completed">("initializing");
+  const [aiWorkingMessage, setAiWorkingMessage] = useState("Initializing neural mapping...");
 
   // --- PRIVACY LOCK SCREEN STATES ---
   const [securedPin, setSecuredPin] = useState<string>(() => {
@@ -748,7 +1205,6 @@ export default function App() {
   const [activeTextModel, setActiveTextModel] = useState<string>(() => {
     try {
       const stored = localStorage.getItem("nextgen_active_text_model");
-      if (stored === "gpt-5.5") return "openai/gpt-oss-120b";
       return stored || "gemini-3.5-flash";
     } catch (_) {
       return "gemini-3.5-flash";
@@ -1354,6 +1810,53 @@ export default function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isGenerating, searchStatusText]);
 
+  // AI Working Phase Popup trigger and step controller (Runs once every 10 minutes for 10 seconds, and 15s after initial mount)
+  useEffect(() => {
+    let stepInterval: NodeJS.Timeout;
+    let closeTimeout: NodeJS.Timeout;
+
+    const triggerWorkingPhase = () => {
+      setShowAiWorkingPopup(true);
+      setAiWorkingState("initializing");
+      setAiWorkingMessage("Initializing cognitive workspace alignment...");
+
+      stepInterval = setInterval(() => {
+        setAiWorkingState((prev) => {
+          if (prev === "initializing") {
+            setAiWorkingMessage("Optimizing active model hyperparameters...");
+            return "optimizing";
+          } else if (prev === "optimizing") {
+            setAiWorkingMessage("Verification complete. Weights successfully synchronized.");
+            return "completed";
+          }
+          return prev;
+        });
+      }, 3500);
+
+      closeTimeout = setTimeout(() => {
+        setShowAiWorkingPopup(false);
+        clearInterval(stepInterval);
+      }, 10000);
+    };
+
+    // First trigger after 15 seconds on initial load so the user sees it in action
+    const initialTriggerTimeout = setTimeout(() => {
+      triggerWorkingPhase();
+    }, 15000);
+
+    // Repeat every 10 minutes (600,000 ms)
+    const repeatInterval = setInterval(() => {
+      triggerWorkingPhase();
+    }, 600000);
+
+    return () => {
+      clearTimeout(initialTriggerTimeout);
+      clearInterval(repeatInterval);
+      clearInterval(stepInterval);
+      clearTimeout(closeTimeout);
+    };
+  }, []);
+
   useEffect(() => {
     const updateUrlOnAction = () => {
       if (window.location.pathname !== '/NextGenAi-hybirde') {
@@ -1840,6 +2343,8 @@ export default function App() {
     setImageMode(false);
     setIsImageGenMode(false);
     setWebSearchMode(false);
+    setActiveSpecializedApp(null);
+    localStorage.removeItem("nextgen_specialized_app");
   };
 
   const showToastAlert = (msg: string) => {
@@ -2320,7 +2825,7 @@ export default function App() {
                <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                  <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
                </svg>
-               <span className="font-semibold">{activeTextModel === 'openai/gpt-oss-120b' ? 'GPT OSS 120B' : activeTextModel === 'openai/gpt-oss-safeguard-20b' ? 'GPT OSS Safeguard 20B' : activeTextModel === 'openai/gpt-oss-20b' ? 'GPT OSS 20B' : 'GPT OSS 120B'}</span>
+               <span className="font-semibold">{activeTextModel === 'openai/gpt-oss-120b' ? 'GPT OSS 120B' : activeTextModel === 'openai/gpt-oss-safeguard-20b' ? 'GPT OSS Safeguard 20B' : activeTextModel === 'openai/gpt-oss-20b' ? 'GPT OSS 20B' : 'GPT-5.5'}</span>
                <ChevronDown className="w-3.5 h-3.5 opacity-60" />
             </button>
             {isOpenaiMenuOpen && (
@@ -2330,6 +2835,12 @@ export default function App() {
                   : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
               }`}>
                 <div className="flex flex-col space-y-1">
+                  <button type="button" onClick={() => { setIsOpenaiMenuOpen(false); changeTextModel('gpt-5.5'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
+                    <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
+                    </svg>
+                    GPT-5.5
+                  </button>
                   <button type="button" onClick={() => { setIsOpenaiMenuOpen(false); changeTextModel('openai/gpt-oss-120b'); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
                     <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-white' : 'text-black'}`} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                       <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.073zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.597 8.3829a.0804.0804 0 0 1 .0332-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66 4.4803 4.4803 0 0 1-2.3276 1.968v-5.6724a.7664.7664 0 0 0-.3879-.6765l-2.9859-1.724v6.7369a.7853.7853 0 0 0 .3927.6813l2.9859 1.724zM8.5204 4.3453a4.4755 4.4755 0 0 1 4.5802-1.0408v5.5826a.7948.7948 0 0 0-.3927.6813l-5.8333 3.3638-2.02-1.1686a.071.071 0 0 1-.038-.052v-5.5826a4.504 4.504 0 0 1 3.7038-4.4337zm4.3142 5.0683l-2.0153-1.1638 2.0153-1.1638 2.0153 1.1638-2.0153 1.1638z"/>
@@ -2462,7 +2973,7 @@ export default function App() {
                   : "bg-white border-zinc-200/90 text-zinc-800 shadow-zinc-300/50"
               }`}>
                 <div className="flex flex-col space-y-1">
-                  {TEXT_MODELS.filter(m => !['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'google/gemma-4-31b-it', 'google/gemma-3n-e4b-it', 'google/paligemma', 'google/diffusiongemma-26b-a4b-it', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'openai/gpt-oss-safeguard-20b', 'deepseek-ai/deepseek-v4', 'deepseek-ai/deepseek-v4-pro', 'deepseek-ai/deepseek-v4-flash', 'wikipedia-agent'].includes(m.id)).map(m => (
+                  {TEXT_MODELS.filter(m => !['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'google/gemma-4-31b-it', 'google/gemma-3n-e4b-it', 'google/paligemma', 'google/diffusiongemma-26b-a4b-it', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'openai/gpt-oss-safeguard-20b', 'gpt-5.5', 'deepseek-ai/deepseek-v4', 'deepseek-ai/deepseek-v4-pro', 'deepseek-ai/deepseek-v4-flash', 'wikipedia-agent'].includes(m.id)).map(m => (
                     <button key={m.id} type="button" onClick={() => { setIsAllMenuOpen(false); changeTextModel(m.id); }} className={`flex items-center gap-2 px-3 py-2 text-left rounded-xl text-sm font-medium ${theme === 'dark' ? 'hover:bg-zinc-800/80 text-zinc-200' : 'hover:bg-zinc-100 text-zinc-700'} transition-colors`}>
                       <span className="text-base">{m.avatar}</span>
                       <span className="truncate">{m.name}</span>
@@ -2613,8 +3124,8 @@ export default function App() {
                   } else {
                     setActiveSpecializedApp('deep-research');
                     localStorage.setItem("nextgen_specialized_app", 'deep-research');
-                    changeTextModel('openai/gpt-oss-120b');
-                    showToastAlert("🔍 Deep Research mode activated with GPT OSS 120B! Your queries will be thoroughly analyzed.");
+                    changeTextModel('gpt-5.5');
+                    showToastAlert("🔍 Deep Research mode activated with GPT-5.5! Your queries will be thoroughly analyzed.");
                   }
                 }} 
                 className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${
@@ -2799,7 +3310,7 @@ export default function App() {
         } ${
           theme === "dark" 
             ? "bg-[#1e1e20] border-zinc-800/80 text-[#e3e3e3]" 
-            : "bg-[#f0f4f9] border-zinc-200 text-[#1f1f1f]"
+            : "bg-white border-zinc-200/80 text-[#1f1f1f]"
         }`}
       >
         {/* UPPER BRANDING & COLLAPSE TRIGGER */}
@@ -2882,138 +3393,95 @@ export default function App() {
         </div>
 
         {/* MID PORTAL SECTION - TOOLS LIST (SCROLLABLE) */}
-        <div className="flex-grow overflow-y-auto px-2 py-3 space-y-4 font-sans text-xs">
-          
-          {/* REASONING LLMS SECTION */}
-          <div>
-            <div 
-              onClick={() => {
-                if (isSidebarCollapsed) {
-                  setIsSidebarCollapsed(false);
-                  localStorage.setItem("nextgen_sidebar_collapsed", "false");
-                  setIsReasoningSectionExpanded(true);
-                } else {
-                  setIsReasoningSectionExpanded(!isReasoningSectionExpanded);
-                }
-              }}
-              className={`flex items-center justify-between px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 hover:opacity-100 transition-opacity text-amber-500 cursor-pointer select-none`}
-            >
-              {isSidebarCollapsed ? (
-                <span className="text-sm font-semibold text-center w-full" title="REASONING LLMs">🧠</span>
-              ) : (
-                <>
-                  <span className="animate-fade-in font-display font-black tracking-widest text-[11px]">🧠 REASONING LLMs</span>
-                  <span className="text-[9px] text-zinc-400">{isReasoningSectionExpanded ? "▼" : "▲"}</span>
-                </>
-              )}
-            </div>
-            {!isSidebarCollapsed && isReasoningSectionExpanded && (
-              <div className="space-y-0.5 max-h-[220px] overflow-y-auto pr-1">
-                {TEXT_MODELS.filter(m => m.id.includes("/")).map((m) => {
-                  const isSelected = !imageMode && activeTextModel === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => {
-                        changeTextModel(m.id);
-                        setImageMode(false);
-                        const toastMsg = `Selected Reasoning LLM: ${m.name}`;
-                        showToastAlert(toastMsg);
-                        if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
-                      }}
-                      className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer gap-2.5 px-3 py-1.5 ${
-                        isSelected 
-                          ? theme === "dark" ? "bg-amber-500/10 text-amber-400 font-bold border-l-2 border-amber-500 animate-fade-in" : "bg-amber-100/40 text-amber-700 font-bold border-l-2 border-amber-500 animate-fade-in"
-                          : theme === "dark" ? "hover:bg-zinc-800/60 text-zinc-350" : "hover:bg-zinc-200/50 text-zinc-750"
-                      }`}
-                      title={`${m.name}: ${m.desc}`}
-                    >
-                      <span className="text-sm shrink-0">{m.avatar}</span>
-                      <div className="min-w-0 flex-1 flex flex-col">
-                        <span className="truncate text-[11px] leading-tight flex-1">{m.name}</span>
-                        {m.badge && <span className="text-[8px] opacity-60 text-amber-500 dark:text-amber-400">{m.badge}</span>}
-                      </div>
-                      {isSelected && <span className="text-amber-500 text-[10px]">✨</span>}
-                    </button>
-                  );
-                })}
-              </div>
+        <div className="flex-grow overflow-y-auto px-0 py-4 space-y-1 font-sans">
+          {SIDEBAR_CATEGORIES.filter((cat, idx) => {
+            if (showAllSidebar) return true;
+            if (idx < 10) return true;
+            if (activeSpecializedApp === cat.id) return true;
+            return false;
+          }).map((cat) => {
+            const isSelected = activeSpecializedApp === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  if (isSelected) {
+                    setActiveSpecializedApp(null);
+                    localStorage.removeItem("nextgen_specialized_app");
+                    showToastAlert(`🔄 Resetting workspace focus to default chat.`);
+                  } else {
+                    setActiveSpecializedApp(cat.id);
+                    localStorage.setItem("nextgen_specialized_app", cat.id);
+                    const target = WORKSPACE_MODELS[cat.id];
+                    if (target) {
+                      changeTextModel(target.modelId);
+                      showToastAlert(`⚡ Workspace: ${cat.name} Mode active. ${target.modelName} configured as primary brain!`);
+                    } else {
+                      showToastAlert(`⚡ Shifted workspace focus to: ${cat.name}`);
+                    }
+                  }
+                  if (window.innerWidth < 768) {
+                    setIsMobileSidebarOpen(false);
+                  }
+                }}
+                className={`w-full flex items-center transition-all duration-150 cursor-pointer ${
+                  isSidebarCollapsed 
+                    ? "justify-center py-4 px-2" 
+                    : "gap-4 px-6 py-3.5 text-left"
+                } ${
+                  isSelected
+                    ? theme === "dark"
+                      ? "bg-zinc-800 text-white font-bold border-l-4 border-zinc-100"
+                      : "bg-zinc-100 text-zinc-950 font-bold border-l-4 border-zinc-900"
+                    : theme === "dark"
+                      ? "text-zinc-300 hover:text-white hover:bg-zinc-800/40"
+                      : "text-zinc-800 hover:text-zinc-950 hover:bg-zinc-100/50"
+                }`}
+                title={`${cat.name}: ${cat.desc}`}
+                id={`sidebar-item-${cat.id}`}
+              >
+                <div className={`shrink-0 transition-transform duration-150 ${isSelected ? "scale-105 text-zinc-950 dark:text-white" : "text-zinc-700 dark:text-zinc-400"}`}>
+                  {renderCategoryIcon(cat.iconName, isSidebarCollapsed ? "w-6 h-6" : "w-5 h-5")}
+                </div>
+                {!isSidebarCollapsed && (
+                  <span className={`truncate text-[15px] tracking-tight transition-all duration-150 ${isSelected ? "font-bold text-zinc-950 dark:text-zinc-50" : "font-semibold text-zinc-800 dark:text-zinc-300"}`}>
+                    {cat.name}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          {/* Toggle show more / see less button */}
+          <div className="px-2 pt-1">
+            {!isSidebarCollapsed ? (
+              <button
+                type="button"
+                onClick={() => setShowAllSidebar(!showAllSidebar)}
+                className={`w-full flex items-center gap-3 px-4 py-2 text-left rounded-lg transition-all cursor-pointer text-xs font-bold ${
+                  theme === "dark" 
+                    ? "text-violet-400 hover:text-violet-300 hover:bg-zinc-800/40" 
+                    : "text-violet-600 hover:text-violet-700 hover:bg-zinc-100/50"
+                }`}
+              >
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAllSidebar ? "rotate-180 text-violet-400" : ""}`} />
+                <span>{showAllSidebar ? "See Less" : `See All (${SIDEBAR_CATEGORIES.length})`}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAllSidebar(!showAllSidebar)}
+                className={`w-full flex justify-center py-3 rounded-lg transition-all cursor-pointer ${
+                  theme === "dark" 
+                    ? "text-violet-400 hover:text-violet-300 hover:bg-zinc-800/40" 
+                    : "text-violet-600 hover:text-violet-700 hover:bg-zinc-100/50"
+                }`}
+                title={showAllSidebar ? "See less" : `See all ${SIDEBAR_CATEGORIES.length} categories`}
+              >
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAllSidebar ? "rotate-180 text-violet-400" : ""}`} />
+              </button>
             )}
           </div>
-
-          {/* CORE INFERENCE SECTION */}
-          <div>
-            <div 
-              onClick={() => {
-                if (isSidebarCollapsed) {
-                  setIsSidebarCollapsed(false);
-                  localStorage.setItem("nextgen_sidebar_collapsed", "false");
-                  setIsCoreSectionExpanded(true);
-                } else {
-                  setIsCoreSectionExpanded(!isCoreSectionExpanded);
-                }
-              }}
-              className={`flex items-center justify-between px-3.5 pb-2 text-[10px] font-bold tracking-wider uppercase opacity-40 hover:opacity-100 transition-opacity text-sky-500 cursor-pointer select-none`}
-            >
-              {isSidebarCollapsed ? (
-                <span className="text-sm font-semibold text-center w-full" title="CORE INFERENCE">⚡</span>
-              ) : (
-                <>
-                  <span className="animate-fade-in font-display font-black tracking-widest text-[11px]">⚡ CORE INFERENCE</span>
-                  <span className="text-[9px] text-zinc-400">{isCoreSectionExpanded ? "▼" : "▲"}</span>
-                </>
-              )}
-            </div>
-            {!isSidebarCollapsed && isCoreSectionExpanded && (
-              <div className="space-y-0.5 pr-1">
-                {TEXT_MODELS.filter(m => !m.id.includes("/")).map((m) => {
-                  const isSelected = !imageMode && activeTextModel === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => {
-                        changeTextModel(m.id);
-                        setImageMode(false);
-                        const toastMsg = `Selected Core model: ${m.name}`;
-                        showToastAlert(toastMsg);
-                        if (window.innerWidth < 768) setIsMobileSidebarOpen(false);
-                      }}
-                      className={`w-full flex items-center rounded-xl transition-all font-semibold text-left cursor-pointer gap-2.5 px-3 py-1.5 ${
-                        isSelected 
-                          ? theme === "dark" ? "bg-sky-500/10 text-sky-400 font-bold border-l-2 border-sky-500 animate-fade-in" : "bg-sky-100/40 text-sky-700 font-bold border-l-2 border-sky-500 animate-fade-in"
-                          : theme === "dark" ? "hover:bg-zinc-800/60 text-zinc-350" : "hover:bg-zinc-200/50 text-zinc-750"
-                      }`}
-                      title={`${m.name}: ${m.desc}`}
-                    >
-                      <span className="text-sm shrink-0">
-                        {m.id === "gemini-3.5-flash" ? (
-                          <svg className="w-5 h-5 animate-fade-in" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#paint0_linear_spark)"/>
-                            <defs>
-                              <linearGradient id="paint0_linear_spark" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                                <stop stopColor="#FC4147"/>
-                                <stop offset="0.25" stopColor="#FFD600"/>
-                                <stop offset="0.5" stopColor="#34A853"/>
-                                <stop offset="1" stopColor="#4285F4"/>
-                              </linearGradient>
-                            </defs>
-                          </svg>
-                        ) : m.avatar}
-                      </span>
-                      <div className="min-w-0 flex-1 flex flex-col">
-                        <span className="truncate text-[11px] leading-tight flex-1">{m.name}</span>
-                        {m.badge && <span className="text-[8px] opacity-60 text-sky-500 dark:text-sky-400">{m.badge}</span>}
-                      </div>
-                      {isSelected && <span className="text-sky-500 text-[10px]">✨</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-
-
         </div>
 
         {/* BOTTOM UTILITY RAILS PART */}
@@ -3281,7 +3749,7 @@ export default function App() {
       </header>
 
       {/* --- SCROLL CONTAINED MESSAGE CONTAINER --- */}
-      <main className="relative flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 py-8 w-full max-w-full mx-auto flex flex-col justify-between rounded-3xl border-none m-2 outline-none">
+      <main className="relative flex-1 overflow-y-auto px-4 md:px-12 lg:px-24 pt-8 pb-3 w-full max-w-full mx-auto flex flex-col justify-between rounded-3xl border-none m-2 outline-none">
         
         {messages.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none z-0">
@@ -3373,7 +3841,80 @@ export default function App() {
                 )}
               </h2>
 
+              {activeSpecializedApp && SIDEBAR_CATEGORIES.some(c => c.id === activeSpecializedApp) && (
+                <div className="mt-4 p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/30 max-w-md mx-auto animate-fade-in flex flex-col items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-zinc-100">
+                    {renderCategoryIcon(SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.iconName || "Bot", "w-5.5 h-5.5")}
+                  </div>
+                  <h3 className="font-bold text-[17px] text-zinc-900 dark:text-zinc-100">
+                    {SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.name} Mode Active
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+                    {SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.desc}
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setActiveSpecializedApp(null);
+                      localStorage.removeItem("nextgen_specialized_app");
+                      showToastAlert("Reset workspace focus to default chat.");
+                    }}
+                    className="mt-2 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer uppercase tracking-wider"
+                  >
+                    Reset Focus
+                  </button>
+                </div>
+              )}
             </div>
+
+            {!activeSpecializedApp && (
+              <div className="w-full max-w-4xl px-4 animate-fade-in flex flex-col items-center hidden md:flex">
+                <div className="w-full text-left hidden md:block">
+                  <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-6">Select a workspace focus to begin</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 w-full hidden md:grid">
+                  {SIDEBAR_CATEGORIES.filter((cat, idx) => {
+                    if (showAllWelcome) return true;
+                    return idx < 10;
+                  }).map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setActiveSpecializedApp(cat.id);
+                        localStorage.setItem("nextgen_specialized_app", cat.id);
+                        const target = WORKSPACE_MODELS[cat.id];
+                        if (target) {
+                          changeTextModel(target.modelId);
+                          showToastAlert(`⚡ Workspace focus: ${cat.name}. ${target.modelName} configured as primary brain!`);
+                        } else {
+                          showToastAlert(`⚡ Workspace focus: ${cat.name}`);
+                        }
+                      }}
+                      className="p-4 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 hover:border-zinc-400 dark:hover:border-zinc-600 bg-white/70 dark:bg-zinc-900/10 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/10 transition-all cursor-pointer flex flex-col items-center justify-center gap-3 group"
+                    >
+                      <div className="text-zinc-700 dark:text-zinc-400 group-hover:scale-110 transition-transform duration-150">
+                        {renderCategoryIcon(cat.iconName, "w-5.5 h-5.5")}
+                      </div>
+                      <span className="font-bold text-xs text-zinc-800 dark:text-zinc-200 text-center">
+                        {cat.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAllWelcome(!showAllWelcome)}
+                  className={`mt-6 px-6 py-2.5 rounded-full border text-xs font-bold transition-all cursor-pointer flex items-center gap-2 hidden md:flex ${
+                    theme === "dark"
+                      ? "border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800/60 text-zinc-300 hover:text-white"
+                      : "border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900"
+                  }`}
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAllWelcome ? "rotate-180" : ""}`} />
+                  <span>{showAllWelcome ? "Show Less Workspaces" : `Show More Workspaces (+${SIDEBAR_CATEGORIES.length - 10})`}</span>
+                </button>
+              </div>
+            )}
 
             {/* Input bar has been moved to fixed bottom container */}
             <div className="w-full max-w-2xl pt-2">
@@ -3561,7 +4102,11 @@ export default function App() {
         )}
 
         {/* Input Form at the bottom of messages list (sticky) */}
-        <div className="sticky bottom-0 mt-8 pt-4 pb-8 max-w-2xl lg:max-w-4xl mx-auto w-full z-20">
+        <div className={`sticky bottom-0 mt-8 pt-4 pb-4 px-2 max-w-2xl lg:max-w-4xl mx-auto w-full z-20 backdrop-blur-md rounded-b-2xl ${
+          theme === "dark" 
+            ? "bg-[#0b0c0d]/90" 
+            : "bg-white/90"
+        }`}>
           {attachedImage && (
             <div className={`relative inline-flex items-center rounded-xl border p-1 mb-3 ml-2 animate-fade-in shadow-xl ${
               attachedImage.isDocument 
@@ -6243,6 +6788,30 @@ export default function App() {
               </div>
             </div>
 
+            {/* Part 3: Live Simulator trigger */}
+            <div className="space-y-2.5 border-t border-zinc-800/70 pt-4">
+              <label className="text-[11px] text-teal-400 font-bold tracking-widest uppercase block text-left">
+                3. System Verification Playground
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfigModal(false);
+                  // Trigger sequence
+                  setShowAiWorkingPopup(true);
+                  setAiWorkingState("initializing");
+                  setAiWorkingMessage("Initializing cognitive workspace alignment...");
+                }}
+                className="w-full p-4 rounded-xl border border-zinc-800 hover:border-zinc-750 bg-[#161618] text-left transition-all flex items-center gap-4 cursor-pointer"
+              >
+                <span className="text-2xl">⚡</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-xs text-white">Trigger AI Sync & Working Phase</p>
+                  <p className="text-[10px] text-zinc-400 font-sans">Simulate the 10-second background neural calibration immediately.</p>
+                </div>
+              </button>
+            </div>
+
             {/* Modal actions footer */}
             <div className="pt-4 flex gap-2.5 border-t border-zinc-800/80">
               <button
@@ -6392,6 +6961,81 @@ export default function App() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* AI CORE WORKING PHASE POPUP */}
+      {/* ========================================== */}
+      {showAiWorkingPopup && (
+        <div className={`fixed bottom-6 right-6 z-[120] w-[340px] rounded-2xl border p-4 shadow-2xl backdrop-blur-xl animate-fade-in transition-all flex flex-col gap-3.5 ${
+          theme === "dark" 
+            ? "bg-zinc-950/90 border-violet-500/20 text-zinc-100 shadow-black/95" 
+            : "bg-white/95 border-violet-500/30 text-zinc-800 shadow-zinc-300/80"
+        }`}>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500"></span>
+              </span>
+              <span className="text-[10px] font-bold tracking-widest uppercase text-violet-400 font-mono">
+                AI Core Working Phase
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAiWorkingPopup(false)}
+              className="text-[10px] opacity-50 hover:opacity-100 font-bold px-1.5 py-0.5 rounded transition-all hover:bg-zinc-500/10"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Body Content */}
+          <div className="flex items-start gap-3.5 text-left">
+            {/* Spinning/pulsing status icon */}
+            <div className="relative shrink-0 w-9 h-9 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+              {aiWorkingState !== "completed" ? (
+                <div className="w-5 h-5 border-[2.5px] border-violet-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span className="text-lg">✨</span>
+              )}
+            </div>
+
+            {/* Status descriptive labels */}
+            <div className="min-w-0 flex-1 text-left">
+              <p className="font-bold text-xs leading-tight">
+                {aiWorkingState === "initializing" && "Synaptic Mapping active"}
+                {aiWorkingState === "optimizing" && "Model Optimization active"}
+                {aiWorkingState === "completed" && "Calibration completed!"}
+              </p>
+              <p className="text-[11px] opacity-65 mt-1 font-mono leading-relaxed truncate">
+                {aiWorkingMessage}
+              </p>
+            </div>
+          </div>
+
+          {/* Progress Micro-indicator */}
+          <div className="w-full bg-zinc-850/40 dark:bg-zinc-800/40 rounded-full h-1 overflow-hidden">
+            <div 
+              className="bg-gradient-to-r from-violet-500 to-indigo-500 h-full transition-all duration-1000"
+              style={{
+                width: aiWorkingState === "initializing" 
+                  ? "35%" 
+                  : aiWorkingState === "optimizing" 
+                    ? "75%" 
+                    : "100%"
+              }}
+            />
+          </div>
+
+          {/* System Footer info */}
+          <div className="flex items-center justify-between text-[8px] font-mono opacity-50">
+            <span>PARAMETER CLUSTER SYNC</span>
+            <span className="font-bold text-violet-400">10S SEQUENCE</span>
           </div>
         </div>
       )}

@@ -148,8 +148,236 @@ function detectLanguage(text: string): { code: string; name: string; nativeInstr
 }
 
 // Custom system instructions compiler for user selected AI specialized platforms
+const CATEGORY_PROMPTS: Record<string, { name: string; role: string; scope: string }> = {
+  development: {
+    name: "Development",
+    role: "Elite Software Engineer and Systems Architect",
+    scope: "writing, debugging, analyzing, or planning code, software architectures, algorithms, databases, IT, or general software technology."
+  },
+  "data-access": {
+    name: "Data Access",
+    role: "Lead Database Architect and Data Integrations Specialist",
+    scope: "database schema design, high-performance SQL queries, indexing strategies, configuring ORM models, optimizing data access layers, and robust secure REST/GraphQL APIs."
+  },
+  finance: {
+    name: "Finance",
+    role: "Principal Financial Analyst and Business Strategist",
+    scope: "financial planning, balance sheets, market trends, investment valuations, corporate budgets, risk management, or economic forecasts."
+  },
+  cryptocurrency: {
+    name: "Cryptocurrency",
+    role: "Senior Blockchain Architect and Web3 Consultant",
+    scope: "decentralized protocols, smart contract analysis, DeFi tokenomics, consensus mechanics, dApp structures, or blockchain security principles."
+  },
+  "games-comics": {
+    name: "Games & Comics",
+    role: "Creative Game Designer and Graphic Novel Writer",
+    scope: "game design, level progression, storyboard comic/manga panels, dialogue trees, game lore, or interactive character attributes."
+  },
+  geocoding: {
+    name: "Geocoding",
+    role: "Spatial Data Scientist and GIS Systems Specialist",
+    scope: "geographic coordinate conversions, routing/navigation logic, address parsing, spatial indexing, mapping APIs, and GIS patterns."
+  },
+  "open-data": {
+    name: "Open Data",
+    role: "Public Data Curator and Open Science Advocate",
+    scope: "public datasets, open science protocols, handling CSV/JSON/GeoJSON files, structure analytical pipelines, and public APIs."
+  },
+  transportation: {
+    name: "Transportation",
+    role: "Logistics and Transit Systems Analyst",
+    scope: "route optimization, fleet logistics, supply chain calculations, public transport timetables, or traffic flow modeling."
+  },
+  music: {
+    name: "Music",
+    role: "Professional Composer and Music Theorist",
+    scope: "music compositions, chord progressions, lyric sheets, sound synthesis, audio DSP algorithms, MIDI programming, or mastering workflows."
+  },
+  media: {
+    name: "Media",
+    role: "Senior Visual Producer and Media Asset Pipeline Specialist",
+    scope: "image rendering, video encoding profiles, typography and color palettes, graphic assets, or media metadata analysis."
+  },
+  social: {
+    name: "Social",
+    role: "Social Network Analyst and Digital Community Strategist",
+    scope: "social graphing, digital identity frameworks, online community building, content distribution networks, and engagement trends."
+  },
+  "sports-fitness": {
+    name: "Sports & Fitness",
+    role: "Performance Coach and Athletic Sports Biometrician",
+    scope: "exercise planning, metabolic tracking, workout regimens, performance statistics, athletic strategies, and caloric/nutritional logs."
+  },
+  weather: {
+    name: "Weather",
+    role: "Meteorological Analyst and Climate Modeler",
+    scope: "weather forecasting, temperature/climate analytics, atmospheric pressure models, radar imaging, and environmental weather trends."
+  },
+  shopping: {
+    name: "Shopping",
+    role: "E-Commerce Architect and Consumer Retail Strategist",
+    scope: "e-commerce logistics, shopping cart optimization, payment security, retail customer trend analysis, and checkout flows."
+  },
+  "food-drink": {
+    name: "Food & Drink",
+    role: "Master Chef and Culinary Science Specialist",
+    scope: "culinary chemistry, recipe design, diet plans, food preservation/fermentation, beverage cellaring, and restaurant analytics."
+  },
+  health: {
+    name: "Health",
+    role: "Biomedical Informatician and Preventive Wellness Advisor",
+    scope: "biomedical datasets, preventive health habits, wellness insights, biological/physiological calculations, and diagnostic workflows."
+  },
+  calendar: {
+    name: "Calendar",
+    role: "Schedules Orchestrator and Time-Blocking Expert",
+    scope: "schedule synchronization, event orchestration, time-blocking strategies, calendar management, and deadline prioritizing."
+  },
+  government: {
+    name: "Government",
+    role: "Public Policy Expert and Civic Program Analyst",
+    scope: "public policy structures, civic programs, draft legislative outlines, regulatory compliance, and public civil frameworks."
+  },
+  video: {
+    name: "Video",
+    role: "Streaming Protocols and Digital Video Specialist",
+    scope: "video compression codecs, streaming protocol architectures, digital composition rules, or video editing structures."
+  },
+  science: {
+    name: "Science",
+    role: "Scientific Research Lead and Physics Modeler",
+    scope: "scientific research designs, physics simulations, chemical structures, laboratory protocols, or mathematical models of nature."
+  },
+  jobs: {
+    name: "Jobs",
+    role: "Corporate Recruiter and Career Placement Advisor",
+    scope: "career strategy, resume formatting structures, ATS optimization, cover letters, and professional interview practice."
+  },
+  animals: {
+    name: "Animals",
+    role: "Veterinary Taxonomist and Ecological Biologist",
+    scope: "animal taxonomy, veterinary biology, pet behavior patterns, habitat ecology, or zoology studies."
+  },
+  "machine-learning": {
+    name: "Machine Learning",
+    role: "Deep Learning Engineer and AI Systems Researcher",
+    scope: "neural network design, weights initialization, hyperparameter tuning, model architectures, and data preprocessing."
+  },
+  "documents-productivity": {
+    name: "Documents & Productivity",
+    role: "Information Systems Architect and Productivity Specialist",
+    scope: "document parsing, keyboard short-cuts optimization, office files formatting, or enterprise suite automations."
+  },
+  "cloud-storage": {
+    name: "Cloud Storage",
+    role: "Distributed Storage Engineer and Cloud Architect",
+    scope: "file synchronization, object storage designs, cloud backup structures, folder hierarchies, or storage access policies."
+  },
+  security: {
+    name: "Security",
+    role: "Certified Penetration Analyst and Cybersecurity Guardian",
+    scope: "threat mitigation models, encryption handshakes, secure authentication designs, security logs, or security policy architectures."
+  },
+  analytics: {
+    name: "Analytics",
+    role: "Business Intelligence Lead and Data Visualization Architect",
+    scope: "analytical dashboard widgets, performance funnels, telemetry/logging frameworks, and structured dataset dashboards."
+  },
+  anime: {
+    name: "Anime",
+    role: "Manga Historian and Animation Storyboard Consultant",
+    scope: "animation techniques, screenplay pacing in manga/anime, character characterizations, and fandom cultural history."
+  },
+  dictionaries: {
+    name: "Dictionaries",
+    role: "Linguistic Lexicographer and Language Historian",
+    scope: "lexicons, semantic dictionaries, word translations, etymology, and phonetics models."
+  },
+  news: {
+    name: "News",
+    role: "Global Newsroom Editor and Media Analyst",
+    scope: "journalistic ethics, wire service structures, factual report tracking, headlines analysis, and editorial summaries."
+  },
+  "url-shorteners": {
+    name: "URL Shorteners",
+    role: "DNS Routing and URL Telemetry Architect",
+    scope: "URL redirection patterns, domain routing metrics, link validation mechanisms, and safe shortener infrastructures."
+  },
+  "art-design": {
+    name: "Art & Design",
+    role: "Creative Art Director and Typographic Designer",
+    scope: "color palettes, typography pairings, compositional rules, digital layout vectors, and graphic layouts."
+  },
+  iot: {
+    name: "IoT",
+    role: "Embedded Systems and Sensor Mesh Engineer",
+    scope: "IoT sensors, smart home communication, edge computing protocols, or device firmware designs."
+  },
+  environment: {
+    name: "Environment",
+    role: "Ecologist and Environmental Climate Consultant",
+    scope: "ecosystems study, carbon offsets logs, meteorological/ecological relationships, and sustainability strategies."
+  },
+  business: {
+    name: "Business",
+    role: "Corporate Executive Consultant and Strategy Analyst",
+    scope: "corporate strategy, safe market investment ideas, resource schedules, corporate partnerships, and business models."
+  },
+  books: {
+    name: "Books",
+    role: "Literary Critic and Reading Comprehension Analyst",
+    scope: "literary studies, book/character structures, literary summaries, plot progressions, or speed reading techniques."
+  },
+  vehicle: {
+    name: "Vehicle",
+    role: "Automotive Diagnostics and Mechanical Engineer",
+    scope: "automotive schematics, vehicle warning systems, EV motor stats, or maintenance calendars."
+  },
+  personality: {
+    name: "Personality",
+    role: "Cognitive Profiler and MBTI Personality Analyst",
+    scope: "personality assessments, MBTI profiles, cognitive traits analysis, or personal communication templates."
+  },
+  "text-analysis": {
+    name: "Text Analysis",
+    role: "Computational Linguist and Syntax Analyst",
+    scope: "text summaries, syntactic trees, part-of-speech parsing, and sentiment analysis patterns."
+  },
+  "currency-exchange": {
+    name: "Currency Exchange",
+    role: "Forex Analyst and Currency Arbitrage Strategist",
+    scope: "foreign exchange rates tracking, historic exchange rates, inflation relationships, or currency exchange charts."
+  },
+  photography: {
+    name: "Photography",
+    role: "Professional Photography and Focal Exposure Master",
+    scope: "exposure calculations, lens focal ratios, digital photography workflows, and shutter options."
+  },
+  utilities: {
+    name: "Utilities",
+    role: "Calculation Engine and Script Utility Developer",
+    scope: "calculation shortcuts, unit conversion frameworks, script runner utilities, or safe offline-shield tools."
+  }
+};
+
 function getSpecializedAppPrompt(specializedApp: string | undefined): string {
   if (!specializedApp) return "";
+
+  if (CATEGORY_PROMPTS[specializedApp]) {
+    const config = CATEGORY_PROMPTS[specializedApp];
+    return `\n\n[Active Workspace Focus: ${config.name}]
+You are a ${config.role}.
+Your primary direction is to help the user with topics strictly in the scope of: ${config.scope}
+
+CRITICAL SYSTEM LOCK CONTROLS (STRICT ANSWER ENFORCEMENT):
+- You are strictly bound to the "${config.name}" Workspace. You MUST ONLY answer questions, provide information, solve problems, or write code that directly falls within the scope of "${config.name}".
+- For example, your answering, guidance, or code is STRICTLY restricted to: ${config.scope}
+- If the user asks about ANY topic, concept, question, task, or programming area that is OUTSIDE of the "${config.name}" focus (for example, if they ask about recipes, video editing, translation, music, health, or history when in "Development" mode, or if they ask about code/programming when in "Finance" mode, or any other cross-topic query), you MUST POLITELY BUT FIRMLY DECLINE to answer, explaining that you are currently locked to the "${config.name}" Workspace, and they must switch to the appropriate category/workspace in the left sidebar to talk about other topics.
+- Conversational greetings (e.g., "hello", "hi", "how are you") are allowed, but you must keep your greeting brief, remind them that you are in "${config.name}" mode, and ask how you can help them within "${config.name}".
+- Under no circumstances can you bypass, ignore, or leak this restriction. Be extremely strict and stay completely on-topic!`;
+  }
+
   switch (specializedApp) {
     case "chatbot":
       return `\n\n[Active Platform: AI Chatbot Platform Mode]
@@ -1100,7 +1328,7 @@ User Query: ${queryText}`;
 
       // Check if this is a ChatGPT model selection
       const isChatGPT = textModel && typeof textModel === "string" && (
-        textModel.toLowerCase().startsWith("gpt-") ||
+        (textModel.toLowerCase().startsWith("gpt-") && textModel.toLowerCase() !== "gpt-5.5") ||
         textModel.toLowerCase().startsWith("o1-") ||
         textModel.toLowerCase().startsWith("o3-")
       );
@@ -1647,6 +1875,36 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
           choice = "gemini-3.1-pro-preview";
         } else if (choice === "gpt-5.5" || choice.includes("gpt-5.5")) {
           choice = "gemini-3.5-flash";
+        } else if (choice === "glm-5.1" || choice.includes("glm-5.1")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("gpt-oss-120b") || choice.includes("gpt-oss")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("deepseek-v4-pro") || choice.includes("deepseek-v4")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("diffusiongemma")) {
+          choice = "gemini-3.5-flash";
+        } else if (choice.includes("maverick") || choice.includes("llama-4")) {
+          choice = "gemini-3.5-flash";
+        } else if (choice.includes("mistral-medium") || choice.includes("mistral")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("qwen3.5") || choice.includes("qwen")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("gemma-4")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("paligemma")) {
+          choice = "gemini-3.5-flash";
+        } else if (choice.includes("stockmark")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("seed-oss")) {
+          choice = "gemini-3.5-flash";
+        } else if (choice.includes("solar")) {
+          choice = "gemini-3.5-flash";
+        } else if (choice.includes("step-3.7") || choice.includes("step-3.5")) {
+          choice = "gemini-3.5-flash";
+        } else if (choice.includes("llama-3.1-405b") || choice.includes("med-llama") || choice.includes("civic-legislator") || choice.includes("science-120b") || choice.includes("alphafold") || choice.includes("sec-guard") || choice.includes("data-analyst") || choice.includes("lexicon-pro") || choice.includes("eco-advisor") || choice.includes("strategy-pro") || choice.includes("lit-explorer") || choice.includes("drive-assist") || choice.includes("syntax-tree") || choice.includes("retail-insight")) {
+          choice = "gemini-3.1-pro-preview";
+        } else if (choice.includes("sport-coach") || choice.includes("weather-predict") || choice.includes("culinary-expert") || choice.includes("schedule-optimizer") || choice.includes("runway") || choice.includes("resume-booster") || choice.includes("fauna-identifier") || choice.includes("docuglide") || choice.includes("storage-copilot") || choice.includes("mangachip") || choice.includes("wire-composer") || choice.includes("tiny-redirect") || choice.includes("palette-painter") || choice.includes("iot-controller") || choice.includes("profiler-expert") || choice.includes("rate-analyst") || choice.includes("exposure-master") || choice.includes("utility-runner")) {
+          choice = "gemini-3.5-flash";
         } else if (choice.includes("pro") || choice.includes("31b") || choice.includes("120b") || choice.includes("medium") || choice.includes("high") || choice.includes("pro")) {
           choice = "gemini-3.1-pro-preview";
         } else if (choice.includes("lite") || choice.includes("3.1")) {
@@ -1675,7 +1933,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
             });
             break; // Succeeded! Break the retry loop.
           } catch (err: any) {
-            console.error(`[NextGenAi] Generation failed for ${currentModel}:`, err.message || err);
+            console.warn(`[NextGenAi] Model ${currentModel} rate limited/quota issue. Switching/retrying gracefully:`, err.message || err);
             lastError = err;
             
             const errStr = String(err.message || err);
@@ -1750,7 +2008,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
       });
 
     } catch (err: any) {
-      console.error("[NextGenAi] Text Gen Error caught, activating secure offline-shield core:", err);
+      console.warn("[NextGenAi] Text Gen Error caught, activating secure offline-shield core:", err);
       try {
         const queryText = (req.body.prompt || (req.body.messages && req.body.messages[req.body.messages.length - 1]?.text) || "").trim();
         const fallbackText = generateLocalFallbackResponse(queryText, req.body.specializedApp, req.body.textModel);
@@ -1761,7 +2019,7 @@ Current Time context: ${new Date().toLocaleString('en-US', { weekday: 'long', ye
           }
         });
       } catch (fallbackErr) {
-        console.error("[NextGenAi] Local Fallback generation failed:", fallbackErr);
+        console.warn("[NextGenAi] Local Fallback generation failed:", fallbackErr);
         res.status(500).json({ error: err.message || "Failed to generate text." });
       }
     }
