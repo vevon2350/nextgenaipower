@@ -6727,12 +6727,6 @@ export default function App() {
                     <span className="text-zinc-400">OpenAI & HPC-AI Gateway</span>
                     <span className="text-emerald-500 font-bold flex items-center gap-1">● Securely Hidden</span>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800/50">
-                    <span className="text-zinc-400">OpenRouter & PoolSide Engine</span>
-                    <span className={`${serverConfigStatus.openrouter_api_key || customOpenRouterKey ? "text-emerald-500" : "text-amber-500"} font-bold flex items-center gap-1`}>
-                      ● {serverConfigStatus.openrouter_api_key || customOpenRouterKey ? "Active / Secured" : "Key Needed"}
-                    </span>
-                  </div>
                 </div>
 
                 <div className="border border-zinc-850 bg-zinc-900/40 rounded-xl overflow-hidden mt-2 p-2">
@@ -6742,16 +6736,6 @@ export default function App() {
                       <span className="transition-transform group-open:rotate-180 text-[10px]">▼</span>
                     </summary>
                     <div className="pt-2 pb-1 space-y-3 px-1 border-t border-zinc-800/50 mt-2">
-                      <div className="space-y-1">
-                        <label className="text-[9px] text-zinc-400 font-mono block">OPENROUTER API KEY</label>
-                        <input
-                          type="password"
-                          value={customOpenRouterKey}
-                          onChange={(e) => setCustomOpenRouterKey(e.target.value)}
-                          placeholder="sk-or-v1-..."
-                          className="w-full bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-lg px-2.5 py-1.5 text-[11px] text-white font-mono placeholder-zinc-700 outline-none font-sans"
-                        />
-                      </div>
                       <div className="space-y-1">
                         <label className="text-[9px] text-zinc-400 font-mono block">OPENAI API KEY</label>
                         <input
