@@ -345,6 +345,12 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     desc: "Expert coding, software architecture, debugging, algorithms, and full-stack solutions."
   },
   {
+    id: "aimodel",
+    name: "Aimodel",
+    iconName: "Bot",
+    desc: "AI models, machine learning, and advanced intelligent systems."
+  },
+  {
     id: "data-access",
     name: "Data Access",
     iconName: "Database",
@@ -355,6 +361,18 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     name: "Finance",
     iconName: "Landmark",
     desc: "Financial analytics, market trends, smart budgeting, portfolio tracking, and business strategies."
+  },
+  {
+    id: "shopping",
+    name: "Shopping",
+    iconName: "ShoppingBag",
+    desc: "Online shopping, product search, and deals."
+  },
+  {
+    id: "coding",
+    name: "Coding",
+    iconName: "Code",
+    desc: "Web development, site building, and visual coding tools."
   },
   {
     id: "cryptocurrency",
@@ -415,12 +433,6 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     name: "Weather",
     iconName: "CloudSun",
     desc: "Meteorological forecasting, climate analytics, atmospheric pressure models, and radar imaging."
-  },
-  {
-    id: "shopping",
-    name: "Shopping",
-    iconName: "ShoppingBag",
-    desc: "E-commerce logistics, cart optimization, payment security, and retail customer trends."
   },
   {
     id: "food-drink",
@@ -3419,7 +3431,7 @@ export default function App() {
             const isSelected = activeSpecializedApp === cat.id;
             return (
               <button
-                key={cat.id}
+                key={cat.id + "-sidebar"}
                 onClick={() => {
                   if (isSelected) {
                     setActiveSpecializedApp(null);
@@ -3447,6 +3459,18 @@ export default function App() {
                     }
                     if (cat.id === "development") {
                       showToastAlert(`🚀 Opening Development workspace...`);
+                    }
+                    if (cat.id === "aimodel") {
+                      showToastAlert(`🤖 Opening AI Model workspace...`);
+                    }
+                    if (cat.id === "coding") {
+                      showToastAlert(`💻 Opening Coding workspace...`);
+                    }
+                    if (cat.id === "finance") {
+                      showToastAlert(`💰 Opening Finance workspace...`);
+                    }
+                    if (cat.id === "shopping") {
+                      showToastAlert(`🛍️ Opening Shopping workspace...`);
                     }
                   }
                   if (window.innerWidth < 768) {
@@ -3517,24 +3541,26 @@ export default function App() {
         <div className={`mt-auto p-3.5 border-t border-zinc-200/50 dark:border-zinc-850/50 space-y-1.5 text-xs font-sans`}>
           
           {/* Terms and Conditions (Mobile Only) */}
-          <button
-            onClick={() => {
-              showToastAlert("Terms & Conditions");
-            }}
-            className={`w-full flex md:hidden items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
-              isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
-            } ${
-              theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
-            }`}
-            title="Terms and Conditions"
-          >
-            <span className="text-base">📜</span>
-            {!isSidebarCollapsed && (
-              <span className="truncate animate-fade-in font-bold tracking-[0.1em] uppercase text-[9px]">
-                TERMS & CONDITIONS
-              </span>
-            )}
-          </button>
+          {!process.env.VERCEL && (
+            <button
+              onClick={() => {
+                showToastAlert("Terms & Conditions");
+              }}
+              className={`w-full flex md:hidden items-center rounded-xl transition-all font-semibold text-left cursor-pointer ${
+                isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5"
+              } ${
+                theme === "dark" ? "hover:bg-zinc-800/80 text-zinc-300" : "hover:bg-zinc-200/50 text-zinc-700"
+              }`}
+              title="Terms and Conditions"
+            >
+              <span className="text-base">📜</span>
+              {!isSidebarCollapsed && (
+                <span className="truncate animate-fade-in font-bold tracking-[0.1em] uppercase text-[9px]">
+                  TERMS & CONDITIONS
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Authentication identity strip */}
           <div className="pt-2 border-t border-zinc-200/30 dark:border-zinc-800/40">
@@ -3992,6 +4018,74 @@ export default function App() {
               />
             </div>
           </div>
+        ) : activeSpecializedApp === "aimodel" ? (
+          <div className="relative z-10 w-auto -mx-4 md:-mx-12 lg:-mx-24 animate-fade-in flex flex-col h-[90vh] border border-purple-500/30 dark:border-purple-500/40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden mb-6">
+            {/* Frame Body */}
+            <div className="flex-1 w-full h-full relative bg-zinc-900 overflow-hidden">
+              <iframe
+                id="aimodel-iframe"
+                src="https://notegpt.io/ai-chat"
+                className="absolute top-0 left-0 w-[calc(100%+20px)] h-full border-none bg-zinc-950"
+                title="Aimodel"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                scrolling="yes"
+              />
+            </div>
+          </div>
+        ) : activeSpecializedApp === "coding" ? (
+          <div className="relative z-10 w-auto -mx-4 md:-mx-12 lg:-mx-24 animate-fade-in flex flex-col h-[90vh] border border-yellow-500/30 dark:border-yellow-500/40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden mb-6">
+            {/* Frame Body */}
+            <div className="flex-1 w-full h-full relative bg-zinc-900 overflow-hidden">
+              <iframe
+                id="coding-iframe"
+                src="https://www.blackbox.ai/"
+                className="absolute top-0 left-0 w-[calc(100%+20px)] h-full border-none bg-zinc-950"
+                title="Coding"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                scrolling="yes"
+              />
+            </div>
+          </div>
+        ) : activeSpecializedApp === "finance" ? (
+          <div className="relative z-10 w-auto -mx-4 md:-mx-12 lg:-mx-24 animate-fade-in flex flex-col h-[90vh] border border-emerald-500/30 dark:border-emerald-500/40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden mb-6">
+            {/* Frame Body */}
+            <div className="flex-1 w-full h-full relative bg-zinc-900 overflow-hidden">
+              <iframe
+                id="finance-iframe"
+                src="https://www.investing.com"
+                className="absolute top-0 left-0 w-[calc(100%+20px)] h-full border-none bg-zinc-950"
+                title="Finance"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                scrolling="yes"
+              />
+            </div>
+          </div>
+        ) : activeSpecializedApp === "shopping" ? (
+          <div className="relative z-10 w-auto -mx-4 md:-mx-12 lg:-mx-24 animate-fade-in flex flex-col h-[90vh] border border-orange-500/30 dark:border-orange-500/40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden mb-6">
+            {/* Frame Body */}
+            <div className="flex-1 w-full h-full relative bg-zinc-900 overflow-hidden">
+              <button
+                onClick={() => {
+                  const iframe = document.getElementById("shopping-iframe") as HTMLIFrameElement;
+                  if (iframe) {
+                    iframe.src = iframe.src;
+                  }
+                }}
+                className="absolute top-2 right-2 z-20 bg-zinc-800 text-white p-2 rounded-full hover:bg-zinc-700 shadow-md"
+                title="Reload"
+              >
+                🔄
+              </button>
+              <iframe
+                id="shopping-iframe"
+                src="https://www.flipkart.com"
+                className="absolute top-0 left-0 w-[calc(100%+20px)] h-full border-none bg-zinc-950"
+                title="Shopping"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                scrolling="yes"
+              />
+            </div>
+          </div>
         ) : messages.length === 0 ? (
           // Welcome workflow state dashboard
           <div className="relative z-10 my-auto py-8 space-y-10 animate-fade-in w-full max-w-2xl mx-auto flex flex-col items-center justify-center text-center">
@@ -4101,7 +4195,7 @@ export default function App() {
                     return idx < 10;
                   }).map((cat) => (
                     <button
-                      key={cat.id}
+                      key={cat.id + "-welcome"}
                       onClick={() => {
                         setActiveSpecializedApp(cat.id);
                         localStorage.setItem("nextgen_specialized_app", cat.id);
@@ -4329,7 +4423,7 @@ export default function App() {
         )}
 
         {/* Input Form at the bottom of messages list (sticky) */}
-        {!(activeSpecializedApp === "motionsites" || (activeSpecializedApp === "media" && mediaActiveTab === "app") || activeSpecializedApp === "music" || activeSpecializedApp === "development") && (
+        {!(activeSpecializedApp === "motionsites" || (activeSpecializedApp === "media" && mediaActiveTab === "app") || activeSpecializedApp === "music" || activeSpecializedApp === "development" || activeSpecializedApp === "aimodel" || activeSpecializedApp === "coding" || activeSpecializedApp === "finance" || activeSpecializedApp === "shopping") && (
           <div className={`sticky bottom-0 mt-8 pt-4 pb-4 px-2 max-w-2xl lg:max-w-4xl mx-auto w-full z-20 backdrop-blur-md rounded-b-2xl ${
             theme === "dark" 
               ? "bg-[#0b0c0d]/90" 
