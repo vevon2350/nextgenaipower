@@ -3541,7 +3541,7 @@ export default function App() {
         <div className={`mt-auto p-3.5 border-t border-zinc-200/50 dark:border-zinc-850/50 space-y-1.5 text-xs font-sans`}>
           
           {/* Terms and Conditions (Mobile Only) */}
-          {!process.env.VERCEL && (
+          <div className={typeof window !== "undefined" && window.location.hostname.includes("vercel.app") ? "hidden" : ""}>
             <button
               onClick={() => {
                 showToastAlert("Terms & Conditions");
@@ -3560,7 +3560,7 @@ export default function App() {
                 </span>
               )}
             </button>
-          )}
+          </div>
 
           {/* Authentication identity strip */}
           <div className="pt-2 border-t border-zinc-200/30 dark:border-zinc-800/40">
