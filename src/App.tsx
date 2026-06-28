@@ -36,6 +36,7 @@ import {
   Telescope,
   GraduationCap,
   ArrowUp,
+  ArrowLeft,
   Bot,
   Users,
   Terminal,
@@ -332,6 +333,12 @@ export interface SidebarCategory {
 
 export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   {
+    id: "motionsites",
+    name: "Website Template",
+    iconName: "Globe",
+    desc: "Premium motionsites.ai website templates, layout libraries, high-performance web blocks, and visual motion sections."
+  },
+  {
     id: "development",
     name: "Development",
     iconName: "Terminal",
@@ -586,6 +593,7 @@ export const SIDEBAR_CATEGORIES: SidebarCategory[] = [
 ];
 
 export const WORKSPACE_MODELS: Record<string, { modelId: string; modelName: string }> = {
+  motionsites: { modelId: "google/gemini-3.5-flash", modelName: "Gemini 3.5 Flash" },
   development: { modelId: "glm-5.1", modelName: "GLM-5.1" },
   "data-access": { modelId: "openai/gpt-oss-120b", modelName: "GPT OSS 120B" },
   finance: { modelId: "stockmark/stockmark-2-100b-instruct", modelName: "Stockmark 2 100B" },
@@ -1014,6 +1022,8 @@ export function renderCategoryIcon(iconName: string, className = "w-5 h-5") {
       return <Camera className={className} />;
     case "Wrench":
       return <Wrench className={className} />;
+    case "Globe":
+      return <Globe className={className} />;
     default:
       return <Bot className={className} />;
   }
@@ -1078,6 +1088,7 @@ export default function App() {
   const [showDriveModal, setShowDriveModal] = useState(false);
   const [showPdfcoModal, setShowPdfcoModal] = useState(false);
   const [pdfcoActiveTab, setPdfcoActiveTab] = useState<"html-to-pdf" | "extract-text" | "barcode" | "merge">("html-to-pdf");
+  const [mediaActiveTab, setMediaActiveTab] = useState<"app" | "chat">("app");
 
   // Google Flights SerpApi states
   const [showFlightsModal, setShowFlightsModal] = useState(false);
@@ -1427,12 +1438,17 @@ export default function App() {
     // 1. Validate connection to Firestore on initial boot (Critical Constraint)
     async function testConnection() {
       try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
+        // Use a short Promise race to avoid hanging for 10 seconds on slow/offline connections
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Connection timeout")), 3000)
+        );
+        await Promise.race([
+          getDocFromServer(doc(db, 'test', 'connection')),
+          timeoutPromise
+        ]);
         console.log("[Firebase] Connection check successful.");
       } catch (error) {
-        if (error instanceof Error && error.message.includes('the client is offline')) {
-          console.warn("Please check your Firebase configuration. Client is reporting offline.");
-        }
+        console.warn("[Firebase] Connection check failed or operating in offline fallback state:", error);
       }
     }
     testConnection();
@@ -3419,6 +3435,19 @@ export default function App() {
                     } else {
                       showToastAlert(`⚡ Shifted workspace focus to: ${cat.name}`);
                     }
+                    if (cat.id === "media") {
+                      setMediaActiveTab("app");
+                      showToastAlert(`🚀 Embedded Maginarium Builder live workspace opened!`);
+                    }
+                    if (cat.id === "motionsites") {
+                      showToastAlert(`🚀 Embedded MotionSites live workspace opened!`);
+                    }
+                    if (cat.id === "music") {
+                      showToastAlert(`🎵 Opening Spotify in workspace...`);
+                    }
+                    if (cat.id === "development") {
+                      showToastAlert(`🚀 Opening Development workspace...`);
+                    }
                   }
                   if (window.innerWidth < 768) {
                     setIsMobileSidebarOpen(false);
@@ -3816,7 +3845,154 @@ export default function App() {
           </div>
         )}
 
-        {messages.length === 0 ? (
+        {activeSpecializedApp === "motionsites" && (
+          <div className="relative z-20 w-full max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 mb-6 border-b border-zinc-200/40 dark:border-zinc-800/40 pb-4">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSpecializedApp(null);
+                  localStorage.removeItem("nextgen_specialized_app");
+                  showToastAlert("Returned to default workspace focus.");
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-zinc-200/60 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer shadow-sm group"
+                title="Back to Workspace"
+              >
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+                <span className="text-xs font-display font-bold">Back</span>
+              </button>
+            </div>
+            
+            <div className="flex p-1 bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-md">
+              <span className="px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow flex items-center gap-1.5">
+                {renderCategoryIcon("Globe", "w-3.5 h-3.5")}
+                <span>Website Templates Live</span>
+              </span>
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSpecializedApp(null);
+                localStorage.removeItem("nextgen_specialized_app");
+                showToastAlert("Returned to default workspace focus.");
+              }}
+              className="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              <span>Reset Focus</span>
+            </button>
+          </div>
+        )}
+
+        {activeSpecializedApp === "media" && (
+          <div className="relative z-20 w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 mb-6 border-b border-zinc-200/40 dark:border-zinc-800/40 pb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-display font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
+                Maginarium Hub
+              </span>
+            </div>
+            
+            <div className="flex p-1 bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-md">
+              <button
+                type="button"
+                onClick={() => setMediaActiveTab("app")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  mediaActiveTab === "app"
+                    ? "bg-purple-600 text-white shadow"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                }`}
+              >
+                {renderCategoryIcon("Image", "w-3.5 h-3.5")}
+                <span>Interactive Builder</span>
+                <span className="text-[9px] px-1 bg-white/20 rounded">LIVE</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMediaActiveTab("chat")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  mediaActiveTab === "chat"
+                    ? "bg-purple-600 text-white shadow"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                }`}
+              >
+                {renderCategoryIcon("Bot", "w-3.5 h-3.5")}
+                <span>AI Chat Companion</span>
+              </button>
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSpecializedApp(null);
+                localStorage.removeItem("nextgen_specialized_app");
+                showToastAlert("Returned to default workspace focus.");
+              }}
+              className="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-red-500 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              <span>Reset Focus</span>
+            </button>
+          </div>
+        )}
+
+        {activeSpecializedApp === "motionsites" ? (
+          <div className="relative z-10 w-auto -mx-4 md:-mx-12 lg:-mx-24 animate-fade-in flex flex-col h-[90vh] border border-blue-500/30 dark:border-blue-500/40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden mb-6">
+            {/* Frame Body */}
+            <div className="flex-1 w-full h-full relative bg-zinc-900 overflow-hidden">
+              <iframe
+                id="motionsites-iframe"
+                src="https://motionsites.ai"
+                className="absolute top-0 left-0 w-[calc(100%+17px)] h-full border-none bg-zinc-950"
+                title="MotionSites Website Builder"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                scrolling="yes"
+              />
+            </div>
+          </div>
+        ) : activeSpecializedApp === "media" && mediaActiveTab === "app" ? (
+          <div className="relative z-10 w-full max-w-6xl mx-auto animate-fade-in flex flex-col h-[75vh] md:h-[80vh] border border-purple-500/30 dark:border-purple-500/40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden mb-6">
+            {/* Frame Body */}
+            <div className="flex-1 w-full h-full relative bg-zinc-900">
+              <iframe
+                id="maginarium-iframe"
+                src="https://maginarium-builder.lovable.app"
+                className="w-full h-full border-none bg-zinc-950"
+                title="Maginarium Builder"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+              />
+            </div>
+          </div>
+        ) : activeSpecializedApp === "music" ? (
+          <div className="relative z-10 w-auto -mx-4 md:-mx-12 lg:-mx-24 animate-fade-in flex flex-col h-[90vh] border border-green-500/30 dark:border-green-500/40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden mb-6">
+            {/* Frame Body */}
+            <div className="flex-1 w-full h-full relative bg-zinc-900 overflow-hidden">
+              <iframe
+                id="spotify-iframe"
+                src="https://tunetank.com"
+                className="absolute top-0 left-0 w-[calc(100%+20px)] h-full border-none bg-zinc-950"
+                title="TuneTank"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                scrolling="yes"
+              />
+            </div>
+          </div>
+        ) : activeSpecializedApp === "development" ? (
+          <div className="relative z-10 w-auto -mx-4 md:-mx-12 lg:-mx-24 animate-fade-in flex flex-col h-[90vh] border border-blue-500/30 dark:border-blue-500/40 bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden mb-6">
+            {/* Frame Body */}
+            <div className="flex-1 w-full h-full relative bg-zinc-900 overflow-hidden">
+              <iframe
+                id="development-iframe"
+                src="https://lovable.dev"
+                className="absolute top-0 left-0 w-[calc(100%+20px)] h-full border-none bg-zinc-950"
+                title="NextGenAi"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                scrolling="yes"
+              />
+            </div>
+          </div>
+        ) : messages.length === 0 ? (
           // Welcome workflow state dashboard
           <div className="relative z-10 my-auto py-8 space-y-10 animate-fade-in w-full max-w-2xl mx-auto flex flex-col items-center justify-center text-center">
             <div className="space-y-4 max-w-xl mx-auto flex flex-col items-center">
@@ -3842,27 +4018,75 @@ export default function App() {
               </h2>
 
               {activeSpecializedApp && SIDEBAR_CATEGORIES.some(c => c.id === activeSpecializedApp) && (
-                <div className="mt-4 p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/30 max-w-md mx-auto animate-fade-in flex flex-col items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-zinc-100">
-                    {renderCategoryIcon(SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.iconName || "Bot", "w-5.5 h-5.5")}
+                activeSpecializedApp === "media" ? (
+                  <div className="mt-4 p-6 rounded-2xl border border-purple-500/30 dark:border-purple-500/40 bg-gradient-to-br from-purple-50/50 to-indigo-50/50 dark:from-purple-950/20 dark:to-indigo-950/20 max-w-lg mx-auto animate-fade-in flex flex-col items-center gap-4 text-center shadow-lg">
+                    <div className="w-12 h-12 rounded-full bg-purple-500/15 flex items-center justify-center text-purple-600 dark:text-purple-400 animate-pulse">
+                      {renderCategoryIcon("Image", "w-6 h-6")}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="font-bold text-lg text-zinc-900 dark:text-zinc-50">
+                        Maginarium Chat Assistant
+                      </h3>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-300 font-medium leading-relaxed px-2">
+                        You are in the AI Chat Companion mode. Ask me anything about art styles, metadata, prompts, or design concepts! Click the Interactive Builder tab above to design live.
+                      </p>
+                    </div>
+                    
+                    <div className="w-full bg-zinc-900/10 dark:bg-black/40 border border-zinc-200 dark:border-zinc-800/80 rounded-xl p-3 text-left space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-zinc-500 font-mono">ASSISTANT_STATE</span>
+                        <span className="text-[10px] text-purple-500 font-mono font-bold flex items-center gap-1">● READY_FOR_PROMPTS</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 w-full mt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMediaActiveTab("app");
+                          showToastAlert("🎨 Switched to Interactive Builder workspace.");
+                        }}
+                        className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all shadow-md shadow-purple-500/10 flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        Open Interactive Builder
+                      </button>
+                      
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setActiveSpecializedApp(null);
+                          localStorage.removeItem("nextgen_specialized_app");
+                          showToastAlert("Reset workspace focus to default chat.");
+                        }}
+                        className="px-3.5 py-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors cursor-pointer border border-zinc-200 dark:border-zinc-800"
+                      >
+                        Exit Mode
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-[17px] text-zinc-900 dark:text-zinc-100">
-                    {SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.name} Mode Active
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
-                    {SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.desc}
-                  </p>
-                  <button 
-                    onClick={() => {
-                      setActiveSpecializedApp(null);
-                      localStorage.removeItem("nextgen_specialized_app");
-                      showToastAlert("Reset workspace focus to default chat.");
-                    }}
-                    className="mt-2 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer uppercase tracking-wider"
-                  >
-                    Reset Focus
-                  </button>
-                </div>
+                ) : (
+                  <div className="mt-4 p-5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/30 max-w-md mx-auto animate-fade-in flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-zinc-100">
+                      {renderCategoryIcon(SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.iconName || "Bot", "w-5.5 h-5.5")}
+                    </div>
+                    <h3 className="font-bold text-[17px] text-zinc-900 dark:text-zinc-100">
+                      {SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.name} Mode Active
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+                      {SIDEBAR_CATEGORIES.find(c => c.id === activeSpecializedApp)?.desc}
+                    </p>
+                    <button 
+                      onClick={() => {
+                        setActiveSpecializedApp(null);
+                        localStorage.removeItem("nextgen_specialized_app");
+                        showToastAlert("Reset workspace focus to default chat.");
+                      }}
+                      className="mt-2 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer uppercase tracking-wider"
+                    >
+                      Reset Focus
+                    </button>
+                  </div>
+                )
               )}
             </div>
 
@@ -3881,6 +4105,9 @@ export default function App() {
                       onClick={() => {
                         setActiveSpecializedApp(cat.id);
                         localStorage.setItem("nextgen_specialized_app", cat.id);
+                        if (cat.id === "media") {
+                          setMediaActiveTab("app");
+                        }
                         const target = WORKSPACE_MODELS[cat.id];
                         if (target) {
                           changeTextModel(target.modelId);
@@ -3921,7 +4148,7 @@ export default function App() {
             </div>
 
           </div>
-        ) : (
+        ) : activeSpecializedApp === "music" ? null : (
           // Messages thread list
           <div className="space-y-8 pb-32 w-full max-w-3xl lg:max-w-4xl mx-auto">
             {messages.map((msg) => {
@@ -4102,11 +4329,12 @@ export default function App() {
         )}
 
         {/* Input Form at the bottom of messages list (sticky) */}
-        <div className={`sticky bottom-0 mt-8 pt-4 pb-4 px-2 max-w-2xl lg:max-w-4xl mx-auto w-full z-20 backdrop-blur-md rounded-b-2xl ${
-          theme === "dark" 
-            ? "bg-[#0b0c0d]/90" 
-            : "bg-white/90"
-        }`}>
+        {!(activeSpecializedApp === "motionsites" || (activeSpecializedApp === "media" && mediaActiveTab === "app") || activeSpecializedApp === "music" || activeSpecializedApp === "development") && (
+          <div className={`sticky bottom-0 mt-8 pt-4 pb-4 px-2 max-w-2xl lg:max-w-4xl mx-auto w-full z-20 backdrop-blur-md rounded-b-2xl ${
+            theme === "dark" 
+              ? "bg-[#0b0c0d]/90" 
+              : "bg-white/90"
+          }`}>
           {attachedImage && (
             <div className={`relative inline-flex items-center rounded-xl border p-1 mb-3 ml-2 animate-fade-in shadow-xl ${
               attachedImage.isDocument 
@@ -4177,6 +4405,7 @@ export default function App() {
           )}
           {renderInputForm()}
         </div>
+        )}
       </main>
 
       {/* Voice active Gemini-style Waveform Container */}

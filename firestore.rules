@@ -6,6 +6,11 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if false;
     }
+
+    // Public Health Check/Connection Test Path
+    match /test/{docId} {
+      allow read: if true;
+    }
     
     // Core Identity Primitive Helper
     function isSignedIn() {
